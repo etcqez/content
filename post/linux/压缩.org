@@ -1,0 +1,126 @@
+---
+title: "压缩"
+date: 2023-02-18T17:53:41+08:00
+categories: ["Linux"]
+---
+
+* 压缩
+** 对文件
+*** compress
+- 安装ncompress
+- 比较
+  #+begin_src shell
+  ➜  ~ ll emerge.txt
+  w-r--r-- 1 f f 50K Dec 29 22:05 emerge.txt
+  ➜  ~ compress emerge.txt
+  ➜  ~ ll emerge.txt.Z
+  w-r--r-- 1 f f 20K Dec 29 22:05 emerge.txt.Z
+  #+end_src
+- gentoo没有 =uncompress= 命令
+  #+begin_src shell
+  compress -d emerge.txt.Z
+  zcat emerge.txt.Z > emerge.txt
+  #+end_src
+- 选项
+  - -c 结果输出至标准输出,不删除原文件
+    #+begin_src shell
+    #压缩
+    compress -c emerge.txt > emerge.txt.Z
+    #解压缩
+    compress -dc emerge.txt.Z > emerge2.txt
+    #+end_src
+  - -v 显示详情
+- 文件预览: =zcat emerge.txt.Z=
+*** gzip,gunzip
+#+begin_src shell
+gzip emerge.txt
+gunzip emerge.txt.gz
+#+end_src
+- 比较gzip和compress
+  #+begin_src shell
+➜  ~ ll emerge*
+-rw-r--r-- 1 f f 50K Jan 10 16:26 emerge2.txt
+-rw-r--r-- 1 f f 14K Dec 29 22:05 emerge.txt.gz
+-rw-r--r-- 1 f f 20K Jan 10 16:28 emerge.txt.Z
+  #+end_src
+- 最高压缩比压缩
+  #+begin_src shell
+➜  ~ gzip -9 emerge.txt
+➜  ~ ll emerge*
+-rw-r--r-- 1 f f 50K Jan 10 16:26 emerge2.txt
+-rw-r--r-- 1 f f 14K Dec 29 22:05 emerge.txt.gz
+-rw-r--r-- 1 f f 20K Jan 10 16:28 emerge.txt.Z
+  #+end_src
+- *对命令的输出进行压缩* : cat emerge.txt |gzip > emerge.txt.gz
+*** bzip2,bunzip2
+- 选项 -k 保留原文件
+- 比较
+  #+begin_src shell
+➜  ~ bzip2 emerge.txt
+➜  ~ ll emerge*
+-rw-r--r-- 1 f f 50K Jan 10 16:26 emerge2.txt
+-rw-r--r-- 1 f f 12K Dec 29 22:05 emerge.txt.bz2
+-rw-r--r-- 1 f f 14K Jan 10 16:40 emerge.txt.gz
+-rw-r--r-- 1 f f 20K Jan 10 16:28 emerge.txt.Z
+  #+end_src
+- 预览: *bzcat* emerge.txt.bz2
+*** xz,unxz
+- 比较
+  #+begin_src shell
+➜  ~ xz -k emerge.txt
+➜  ~ ll emerge*
+-rw-r--r-- 1 f f 50K Jan 10 16:26 emerge2.txt
+-rw-r--r-- 1 f f 50K Dec 29 22:05 emerge.txt
+-rw-r--r-- 1 f f 12K Dec 29 22:05 emerge.txt.bz2
+-rw-r--r-- 1 f f 14K Jan 10 16:40 emerge.txt.gz
+-rw-r--r-- 1 f f 13K Dec 29 22:05 emerge.txt.xz
+-rw-r--r-- 1 f f 20K Jan 10 16:28 emerge.txt.Z
+  #+end_src
+- 预览: xzcat emerge.txt.xz
+** 文件夹
+*** zip,unzip *可能丢失文件属性信息,一般建议使用tar*
+- =zip -r target.zip source=, -r 递归
+- *指定目录解包,默认解压到当前目录*: =unzip target.zip -d /=
+- *不包含目录本身,只打包目录内的文件和子目录*: =zip -r ~.zip *=
+- 比较
+  #+begin_src shell
+  ➜  ~ zip emerge.txt.zip emerge.txt
+    adding: emerge.txt (deflated 72%)
+  ➜  ~ ll emerge*
+  -rw-r--r-- 1 f f 50K Jan 10 16:26 emerge2.txt
+  -rw-r--r-- 1 f f 50K Dec 29 22:05 emerge.txt
+  -rw-r--r-- 1 f f 12K Dec 29 22:05 emerge.txt.bz2
+  -rw-r--r-- 1 f f 14K Jan 10 16:40 emerge.txt.gz
+  -rw-r--r-- 1 f f 13K Dec 29 22:05 emerge.txt.xz
+  -rw-r--r-- 1 f f 20K Jan 10 16:28 emerge.txt.Z
+  -rw-r--r-- 1 f f 14K Jan 10 17:16 emerge.txt.zip
+
+  ➜  blog git:(master) ✗ unzip ../emerge.txt.zip
+  Archive:  ../emerge.txt.zip
+    inflating: emerge.txt
+  #+end_src
+*** tar(Tape ARchive)
+1. c: 打包 t: 预览 x: 解包
+2. 打包
+   #+begin_src shell
+   tar cf target.tar sourcce
+   #+end_src
+3. 解包
+   #+begin_src shell
+   # -C指定目录
+   tar xf emerge.txt.tar -C Pictures
+   #+end_src
+4. 打包并压缩
+   - =zcf= gz
+   - =jcf= bz2
+   - =Jcf= xz
+5. 选项
+   - -p 保留属性
+     *无法保留acl权限,acl权限需要单独备份*
+   - -​-exclude
+   - -T 要打包的文件 -X不打包的文件
+     - tar zcvf mybackup.tgz -T /root/incledefilelist -X /root/excludefilelist
+6. 快速文件复制
+   #+begin_src shell
+   tar c /var |tar x -C /data/
+   #+end_src

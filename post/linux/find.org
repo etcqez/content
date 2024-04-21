@@ -1,0 +1,84 @@
+* find
+*通配符要加双引号*
+** 查找
+1. 指定搜索目录层级
+   - =-maxdepth -mindepth=
+     - =find /etc/ -maxdepth 2 -mindepth 2=
+2. 对每个目录先处理目录内的文件,再处理目录本身
+   - =-depth -d=
+3. 根据文件名和inode查找
+   - =-name=
+   - =-iname= 不区分大小写
+   - =-inum= 按inode号查找
+     - =find / -inum 256 -ls=
+   - =-samefile= 相同inode的文件
+   - =-links= 链接数为n的文件
+   - =-regex= 匹配整个文件路径,而非文件名称
+     - =find / -regex ".*\.jpg$"=
+4. =find / -nouser= 查看没有所有者的文件
+5. 根据文件类型查找
+   - =type [bcdflsp]=
+6. 查找空文件或目录
+   - =find / -type d -empty -ls=
+   - =find / -type f -empty -ls=
+7. 组合条件 =-a -o -not !=
+   - 默认取两结果的并集: =find / -type d -empty -ls=,同 =find / -type d -a -empty -ls=
+   - -o和-ls一起使用发生的问题
+       #+begin_src shell
+   ➜  ~ s find /etc/ -type d -o -type l -ls |wc -l
+   372
+   ➜  ~ s find /etc/ -type d -o -type l |wc -l
+   532
+   #括号前后心须加空格
+   ➜  ~ s find /etc/ \( -type d -o -type l \) -ls |wc -l
+   532
+       #+end_src
+     - =s find /etc/ \( -type d -o -type l \) -ls |wc -l=
+       - 同 =s find /etc/ \( -type d -o -type l \) -a -ls |wc -l=
+       - *-o或,-a并,或的优先级不如并且的优先级高*
+8. 取反 =find /etc ! -name "*.conf"=
+9. 根据文件大小来查找
+   - =-size [+,-]6k=
+     - 6k (5k,6k]
+     - -6k (0,5k]
+     - +6k (6k,]
+10. 根据时间戳
+    - =-[a,m,c]time [+,-]#= =以天为单位=
+      - #​ [#,#+1]
+      - +# [#+1,]
+      - -# [0,#)
+    - =[a,m,c]min [+,-]#= =以分钟为单位=
+*** 根据权限查找
+  - =-perm [/,-]=
+    1. 什么都不加,精确匹配
+       - find /etc -perm 600
+         *权限必须是600*
+    2. =/,-= 模糊匹配
+       - /:或 -:并
+         1. =find /etc/ -perm /444=, *只要有一个有读权限就可以*
+         2. =find /etc/ -perm -444=, *三个都得有读权限*
+         3. =find /etc/ -perm -044=, *0表示不关心*
+         4. =find / -perm [-,/]002= *同*
+            - =find ​/bin/ -perm [/,-]7000 -ls= *不同
+            - =find /bin/ -perm /7000 -ls= 只要1位有特殊权限就行
+         5. =find / \( -path "/sys" -o -path "/proc" \) -a -prune -o -perm /002 -a -type f=
+            查看其他人有没有写的权限
+** 处理动作
+- -print 默认的处理动作
+- -ls
+  #+begin_src shell
+  find -maxdepth 1 -type f |xargs ls -Slh
+  #不是那么好用
+  find -maxdepth 1 -type f -exec ls -Slh {} \;
+  #+end_src
+- -fls 将查找到的所有文件的长格式信息保存至指定文件中,同-ls加重定向
+- -delete *慎用*
+- =-ok -exec= 区别在于-ok会有交互
+  #+begin_src shell
+  #给当前目录的.sh文件加上可执行权限
+  find -maxdepth 1 -type f -perm 644 -name "*.sh" -exec chmod 755 {} \;
+  #调用的rm不是别名,慎用
+  find -maxdepth 1 -type f -perm 755 -name ".sh" -exec rm {} \;
+  #会有提示,输入y删除
+  find -maxdepth 1 -type f -perm 755 -name ".sh" -ok rm {} \;
+  #+end_src

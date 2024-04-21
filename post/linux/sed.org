@@ -1,0 +1,28 @@
+---
+title: "Sed"
+date: 2023-02-18T22:49:43+08:00
+categories: ["Linux"]
+---
+
+* sed
+- 忽略大小写: =sed -n "/ROOT/Ip"=
+- 取反: =sed -n "/root/!p"= 同 =sed "/root/d"=
+- 修改并备份: =sed -i.orig "/root/d"=
+- 替换: =sed -i.bak "/^SELINUX=disabled/c SELINUX=enforcing" /etc/selinux/config=
+** 搜索替换
+#+begin_src shell
+sed -Ei.bak "s/^(SELINUX=).*/\1enforcing/" /etc/selinux/config
+#+end_src
+- grub
+  #+begin_src shell
+  sed -Ei.bak '/^GRUB_CMDLINE_LINUX/s/(.*)"$/\1 net.ifnames=0' /etc/default/grub
+  sed -nr '/^GRUB_CMDLINE/s/"$/ net.ifnames=0"/p' /etc/default/grub
+  #+end_src
+- ip
+  #+begin_src shell
+  ifconfig wlan0 |sed -rn '2s/^[^0-9]+([0-9.]+) .*$/\1/p'
+  #+end_src
+- 将没有搜索到的行加#
+  #+begin_src shell
+  sed -Ei.bak '/^#/!s/^/#/' /etc/fstab
+  #+end_src

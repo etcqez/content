@@ -1,0 +1,23 @@
+---
+title: "安装mysql,禁用mysql的历史记录"
+date: 2023-05-06T10:44:24+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+* gentoo安装mysql
+#+begin_src shell
+sudo emerge --config =dev-db/mysql-8.0.31-r1
+rc-update add mysql default; rc-service mysql start
+mysql_secure_installation
+# 禁用历史记录:
+ln -sf /dev/null ~/.mysql_history
+#+end_src
+
+* arch安装mariadb
+- 在btrfs中关闭写复制
+- =sudo mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql=
+- =sudo systemctl enable mariadb.service --now=
+* 在btrfs中关闭/var/lib/mysql文件夹的写时复制
+=sudo chattr +C /var/lib/mysql=

@@ -1,0 +1,18 @@
+---
+title: "会话管理"
+date: 2023-02-14T20:58:48+08:00
+categories: ["Linux"]
+---
+
+* 会话管理
+- screen实现屏幕共享
+  #+begin_src shell
+  #开启help会话
+  screen -S help
+  #查看
+  screen -ls
+  #加入
+  screen -x help
+  #退出共享
+  C-a,d
+  #+end_src

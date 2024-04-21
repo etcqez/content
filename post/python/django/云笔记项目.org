@@ -1,0 +1,595 @@
+---
+title: "云笔记项目"
+date: 2023-05-15T21:41:23+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 基础配置
+** 创建项目
+#+begin_src shell
+django-admin startproject dj_note
+python manage.py startapp user
+#+end_src
+** 创建数据库
+#+begin_src sql
+create database dj_note default charset utf8;
+#+end_src
+** 启动项目
+** 配置setting.py
+#+BEGIN_SRC python :results output
+INSTALLED_APPS = [
+    'user',
+]
+
+MIDDLEWARE = [
+        # 'django.middleware.csrf.CsrfViewMiddleware',
+]
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
+        # mysql的数据库名
+        'NAME': 'dj_note',
+        'USER': 'root',
+        'PASSWORD': 'f',
+        'HOST': '127.0.0.1',
+        'PORT': '3306'
+    }
+}
+
+LANGUAGE_CODE = 'zh-Hans'
+
+TIME_ZONE = 'Asia/Shanghai'
+
+
+
+#+END_SRC
+** 配置完成再次运行 =python manage.py runserver= 检查是否正确配置
+* 用户模型类设计
+** create_time和updated_time,不管什么业务,每张表必须要有
+* 创建user_user表
+** user/models.py
+#+BEGIN_SRC python :results output
+from django.db import models
+
+# Create your models here.
+class User(models.Model):
+    username = models.CharField('用户名', max_length=30, unique=True)
+    password = models.CharField('密码', max_length=32)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    update_time = models.DateTimeField('更新时间', auto_now=True)
+
+    def __str__(self):
+        return 'username %s'%(self.username)
+
+#+END_SRC
+** 检查表的创建
+1. =python manage.py makemigrations=
+2. =python manage.py migrate=
+1. =desc user_user=
+* 用户注册
+** 分析
+- url: /user/reg
+- 视图函数: reg_view
+- 模板位置: templetes/user/register.html
+- 界面样式
+  | 用户名 |   |
+  | 密码  |   |
+  | 密码  |   |
+  | 注册  |   |
+** GET请求注册页面
+*** GET请求页面
+**** dj_note/user/views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render
+from .models import User
+
+# Create your views here.
+def reg_view(request):
+    # 注册
+    # GET 返回页面
+    if request.method == 'GET':
+        return render(request, 'user/register.html')
+
+#+END_SRC
+**** mkdir -p user/templetes/user; touch user/templetes/user/register.html
+#+begin_src html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>注册</title>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <form action="/user/reg" method="post">
+      <p>
+      用户名: <input type="text" name="username">
+      </p>
+      <p>
+      密码: <input type="text" name="password_1">
+      </p>
+      <p>
+      再次输入密码: <input type="text" name="password_2">
+      </p>
+      <p>
+      <input type="submit" value="注册">
+      </p>
+
+    </form>
+
+  </body>
+</html>
+
+#+end_src
+**** dj_note/urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('user/', include('user.urls'))
+]
+
+#+END_SRC
+**** user/urls.py
+#+BEGIN_SRC python :results output
+from django.urls import path
+from . import views
+urlpatterns = [
+    path('reg', views.reg_view)
+]
+
+#+END_SRC
+**** 测试,访问/user/reg,出现页面
+** POST提交请求
+**** dj_note/user/views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render
+from .models import User
+
+# Create your views here.
+def reg_view(request):
+    # 注册
+    # GET 返回页面
+    if request.method == 'GET':
+        return render(request, 'user/register.html')
+    # POST 处理提交数据
+    elif request.method == 'POST':
+        username = request.POST['username']
+        password_1 = request.POST['password_1']
+        password_2 = request.POST['password_2']
+    #   1. 两个密码要保持一致
+        if password_1 != password_2:
+            return HttpResponse('再次密码输入不一致')
+    #   2. 当前用户名是否可用
+        old_users = User.objects.filter(username=username)
+        if old_users:
+            return HttpResponse('用户名已注册')
+    #   3. 插入数据 [明文处理密码]
+        User.objects.create(username=username, password=password_1)
+        return HttpResponse('注册成功')
+
+
+#+END_SRC
+**** 测试,访问/user/reg,试试提交注册,并检查数据库
+* 注册问题 - 优化
+** hashlib
+#+BEGIN_SRC python :results output
+In [1]: import hashlib
+
+In [2]: m = hashlib.md5()
+
+In [3]: m.update(b'123456')
+
+In [4]: m.hexdigest()
+Out[4]: 'e10adc3949ba59abbe56e057f20f883e'
+
+#+END_SRC
+*** 如果重新计算123的hash值,m对象需要重新生成
+#+BEGIN_SRC python :results output
+In [5]: m.update(b'123')
+
+In [6]: m.hexdigest()
+Out[6]: '579d9ec9d0c3d687aaa91289ac2854e4'
+
+In [7]: h = hashlib.md5()
+
+In [8]: h.update(b'123456123')
+
+In [9]: h.hexdigest()
+Out[9]: '579d9ec9d0c3d687aaa91289ac2854e4'
+
+#+END_SRC
+
+** 并发时创建用户.因为唯一索引,mysql会抛出错误
+#+BEGIN_SRC python :results output
+        try:
+            User.objects.create(username=username, password=password_m)
+        except Exception as e:
+            # 有可能报错 - 重复插入 [唯一索引注意并发写入问题]
+            print('--create user error %s'%(e))
+            return HttpResponse('用户名已注册')
+
+#+END_SRC
+* 免登录一天
+#+BEGIN_SRC python :results output
+    #   2. 当前用户名是否可用
+        old_users = User.objects.filter(username=username)
+        if old_users:
+            return HttpResponse('用户名已注册')
+    #   3. 插入数据 [明文处理密码]
+        try:
+            user = User.objects.create(username=username, password=password_m)
+        except Exception as e:
+            # 有可能报错 - 重复插入 [唯一索引注意并发写入问题]
+            print('--create user error %s'%(e))
+            return HttpResponse('用户名已注册')
+        # 免登录一天
+        request.session['username'] = username
+        request.session['uid'] = user.id
+        return HttpResponse('注册成功')
+
+#+END_SRC
+* 用户登录
+** 分析
+1. url: /user/login
+2. 视图函数: login_view
+3. 模板位置: tamplates/user/login.html
+4. 界面样式
+   | 用户名 |          |
+   | 密码  |          |
+   | 口    | 记住用户名 |
+   | 登录  |          |
+** GET POST
+*** user/views.py
+#+BEGIN_SRC python :results output
+def login_view(request):
+    if request.method == 'GET':
+        # 获取登录页面
+        return render(request, 'user/login.html')
+    elif request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+
+        try:
+            user = User.objects.get(username=username)
+        except Exception as e:
+            print('--login user error %s'%(e))
+            return HttpResponse('用户名或密码错误')
+
+        # 比对密码
+        m = hashlib.md5()
+        m.update(password.encode())
+
+        if m.hexdigest() != user.password:
+            return HttpResponse('用户名或密码错误')
+
+        # 记录会话状态
+        request.session['username'] = username
+        request.session['uid'] = user.id
+
+        return HttpResponse('---登录成功---')
+
+#+END_SRC
+*** user/templates/user/login.html
+#+begin_src html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>登录</title>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <form action="/user/login" method="post">
+      <p>
+      用户名: <input type="text" name="username">
+      </p>
+
+      <p>
+      密码: <input type="text" name="password">
+      </p>
+
+      <p>
+      <input type="checkbox" name="remember"> 记住用户名
+      </p>
+
+      <p>
+      <input type="submit" value="登录">
+      </p>
+    </form>
+
+  </body>
+</html>
+
+#+end_src
+** 判断用户是否点选了记住用户名
+*** Cookies存长期数据
+*** session存短期数据
+*** 当点选了记住用户名,表单数据会多出remember=on
+#+BEGIN_SRC python :results output
+        resp = HttpResponse('---登录成功---')
+        # 判断用户是否点选了 '记住用户名'
+        if 'remember' in request.POST:
+            resp.set_cookie('username', username, 3600*24*3)
+            resp.set_cookie('uid', user.id, 3600*24*3)
+        # 点选了 -> Cookies 存储 username,uid 时间3天
+
+        return resp
+
+#+END_SRC
+
+** 校验是否登录 - 登录状态检查
+*** session在request里,cookie在response里
+#+BEGIN_SRC python :results output
+def login_view(request):
+    if request.method == 'GET':
+        # 获取登录页面
+        # 检查登录状态,如果登录了,显示'已登录'
+        if request.session.get('username') and request.session.get('uid'):
+            return HttpResponse('已登录')
+        # 检查Cookies
+        c_username = request.COOKIES.get('username')
+        c_uid = request.COOKIES.get('uid')
+        if c_username and c_uid:
+            request.session['username'] = c_username
+            request.session['uid'] = c_uid
+            return HttpResponse('已登录')
+        return render(request, 'user/login.html')
+    elif request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+
+        try:
+            user = User.objects.get(username=username)
+        except Exception as e:
+            print('--login user error %s'%(e))
+            return HttpResponse('用户名或密码错误')
+
+        # 比对密码
+        m = hashlib.md5()
+        m.update(password.encode())
+
+        if m.hexdigest() != user.password:
+            return HttpResponse('用户名或密码错误')
+
+        # 记录会话状态
+        request.session['username'] = username
+        request.session['uid'] = user.id
+
+        resp = HttpResponse('---登录成功---')
+        # 判断用户是否点选了 '记住用户名'
+        if 'remember' in request.POST:
+            resp.set_cookie('username', username, 3600*24*3)
+            resp.set_cookie('uid', user.id, 3600*24*3)
+        # 点选了 -> Cookies 存储 username,uid 时间3天
+
+
+        return resp
+
+#+END_SRC
+
+
+* 网站首页
+** 分析
+- url: /index
+- 视图函数: index_view
+- 模板位置: templates/index/index.html
+- 界面样式:
+  | 登录前    | 登录后           |
+  | 登录 注册 | 欢迎:txz 退出登录 |
+  |         | 进入我的笔记      |
+** 创建应用: python manage.py startapp index
+*** 注册应用
+*** 创建模板:  mkdir -p templates/index/index.html
+#+begin_src html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>首页</title>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <!-- 测试是否在index可访问session和COOKIES -->
+    <!-- {{ request.session }} -->
+    <!-- {{ request.COOKIES }} -->
+    {% if request.session.username %}
+    <p>
+    欢迎 {{ request.session.username }}
+    </p>
+    <p>
+    <a href="">退出登录</a>
+    </p>
+    <p>
+    <a href="">进入我的笔记</a>
+    </p>
+    {% else %}
+        {% if request.COOKIES.username %}
+        <p>
+        欢迎 {{ request.COOKIES.username}}
+        </p>
+        <p>
+        <a href="">退出登录</a>
+        </p>
+        <p>
+        <a href="">进入我的笔记</a>
+        </p>
+        {% else %}
+        <p>
+        <a href="/user/login">登录</a>
+        </p>
+        <p>
+        <a href="/user/reg">注册</a>
+        </p>
+        {% endif %}
+
+    {% endif %}
+  </body>
+</html>
+
+#+end_src
+*** views.py
+#+BEGIN_SRC python :results output
+from django.shortcuts import render
+
+# Create your views here.
+def index_view(request):
+    return render(request, 'index/index.html')
+
+#+END_SRC
+*** 主路由
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import include, path
+from index import views as index_views
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('user/', include('user.urls')),
+    path('index', index_views.index_view),
+]
+
+#+END_SRC
+* 笔记模型类
+** 分析
+- url: /note/add
+- 视图函数: add_note
+- 模板位置: templates/note/add_note.html
+** 创建应用: python manage.py startapp note
+** 注册应用
+** 模型类: note/models.py
+#+BEGIN_SRC python :results output
+from django.db import models
+from user.models import User
+
+# Create your models here.
+class Note(models.Model):
+    title = models.CharField('标题', max_length=100)
+    content = models.TextField('内容')
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    update_time = models.DateTimeField('更新时间', auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+#+END_SRC
+
+** migrate
+*** 检查数据库
+** views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+from django.shortcuts import render
+
+# Create your views here.
+def add_note(request):
+    if request.method == 'GET':
+        return render(request, 'note/add_note.html')
+    elif request.method == 'POST':
+        # 处理数据
+        return HttpResponse('添加笔记成功')
+
+#+END_SRC
+** add_note.html
+#+begin_src html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>添加笔记</title>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <form action="/note/add" mehtod="post">
+      <p>
+      标题: <input type="text" name="title"> <input type="submit" value="保存">
+      </p>
+      <p>
+      <textarea rows="30" cols="10" name="content"></textarea>
+      </p>
+
+    </form>
+
+  </body>
+</html>
+
+#+end_src
+* 检查登录状态的装饰器
+#+BEGIN_SRC python :results output
+# 检查登录状态的装饰器
+def check_login(fn):
+    # 内部的def,它的参数是包裹的函数的参数,也就是视图函数的参数
+    def wrap(request, *args, **kwargs):
+        if 'username' not in request.session or 'uid' not in request.session:
+            # 检查Cookies
+            c_username = request.COOKIES.get('username')
+            c_uid = request.COOKIES.get('uid')
+            if not c_username or not c_uid:
+                return HttpResponseRedirect('/user/login')
+            else:
+                # 回写session
+                request.session['username'] = c_username
+                request.session['uid'] = c_uid
+        return fn(request, *args, **kwargs)
+    return wrap
+
+#+END_SRC
+* 登出: user/views
+#+BEGIN_SRC python :results output
+def logout_view(request):
+    # 删除session
+    if 'username' in request.session:
+        del request.session['username']
+    if 'uid' in request.session:
+        del request.session['uid']
+
+    # 删除Cookies
+    resp = HttpResponseRedirect('/index')
+    if 'username' in request.COOKIES:
+        resp.delete_cookie('username')
+    if 'uid' in request.COOKIES:
+        resp.delete_cookie('uid')
+    return resp
+
+#+END_SRC
+* 添加笔记: note/views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
+from .models import Note
+
+# 检查登录状态的装饰器
+def check_login(fn):
+    # 内部的def,它的参数是包裹的函数的参数,也就是视图函数的参数
+    def wrap(request, *args, **kwargs):
+        if 'username' not in request.session or 'uid' not in request.session:
+            # 检查Cookies
+            c_username = request.COOKIES.get('username')
+            c_uid = request.COOKIES.get('uid')
+            if not c_username or not c_uid:
+                return HttpResponseRedirect('/user/login')
+            else:
+                # 回写session
+                request.session['username'] = c_username
+                request.session['uid'] = c_uid
+        return fn(request, *args, **kwargs)
+    return wrap
+
+
+# Create your views here.
+@check_login
+def add_note(request):
+    if request.method == 'GET':
+        return render(request, 'note/add_note.html')
+    elif request.method == 'POST':
+        # 处理数据
+        uid = request.session['uid']
+        title = request.POST['title']
+        content = request.POST['content']
+
+        Note.objects.create(title=title, content=content, user_id=uid)
+        return HttpResponse('添加笔记成功')
+
+#+END_SRC

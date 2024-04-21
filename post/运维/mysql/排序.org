@@ -1,0 +1,15 @@
+---
+title: "排序"
+date: 2023-05-22T14:25:00+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+* 排序
+- order by 字段 asc(ascend)
+- order by 字段 desc(descend)
+- 列的别名只能在order by中使用,不能在where中使用
+- 二级排序
+  *在一级排序的结果相同时,再进行排序*
+  - order by 字段 desc 字段 asc

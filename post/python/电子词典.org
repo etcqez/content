@@ -1,0 +1,38 @@
+---
+title: "电子词典"
+date: 2023-03-25T20:36:25+08:00
+summary: " "
+categories: ["Python"]
+tags: [""]
+---
+
+* 创建数据库
+#+begin_src sql
+create database dict;
+-- 单词表
+create table words (id int primary key auto_increment,word char(32),mean text);
+insert into words (word,mean) values ('a','first alume');
+insert into words (word,mean) values ('b','second alume');
+-- 用户表
+create table user (id int primary key auto_increment,name varchar(32) not null,passwd varchar(128) not null);
+-- 历史记录表
+create table hist (id int primary key auto_increment,name varchar(32) not null,word varchar(28) not null,time datetime default now()); -- 默认当前时间
+#+end_src
+* 设定客户端服务端协议
+** 注册 R
+** 登录 L
+** 查单词 Q
+** 历史记录 H
+** 退出 E
+* 罗列功能逻辑(每个功能确定服务端和客户端该做什么)
+** 注册
+*** 客户端
+- 输入注册信息
+- 发送请求
+- 得到反馈
+*** 服务端
+- 接收请求
+- 判断是否允许注册
+- 允许注册将用户信息存入数据库
+- 给客户端反馈结果
+* [[../../code/python/电子词典]]

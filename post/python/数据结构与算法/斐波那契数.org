@@ -1,0 +1,46 @@
+---
+title: "斐波那契数"
+date: 2023-05-19T01:13:11+08:00
+summary: " "
+categories: [""]
+tags: [""]
+---
+
+* 递归
+#+begin_quote
+    第n项=(n-1)项 + (n-2)项
+#+end_quote
+#+BEGIN_SRC python :results output
+def fib(n):
+    if  n <= 1:
+        return n;
+    return fib(n-1) + fib(n-2)
+
+print(fib(19))
+
+
+#+END_SRC
+
+#+RESULTS:
+: 4181
+* 循环
+下一次first的值给second,second的值为两者相加
+#+BEGIN_SRC python :results output
+def fib(n):
+    if  n <=1:
+        return n;
+
+    first = 0;
+    second = 1;
+    for i in range(n-1):
+        sum = first+second
+        first = second
+        second = sum
+    return second
+print(fib(19))
+
+
+#+END_SRC
+
+#+RESULTS:
+: 4181

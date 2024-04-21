@@ -1,0 +1,95 @@
+---
+title: "Get请求和post请求"
+date: 2023-05-09T15:31:36+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* get请求
+** urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    path('test_get_post', views.test_get_post)
+]
+
+#+END_SRC
+** views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+
+def test_get_post(request):
+    if request.method == 'GET':
+        # 获取查询字符串,当查询字符串没有a会报错
+        print(request.GET['a'])
+        # 获取查询字符串 当不存在c时,打印'no c'
+        print(request.GET.get('c','no c'))
+    elif request.method == 'POST':
+        pass
+    else:
+        pass
+
+    return HttpResponse('--test get post is ok--')
+
+#+END_SRC
+** 查询字符串的键可以同名
+#+begin_quote
+127.0.0.1:8000/test_get_post/?a=1&a=2&a=3
+#+end_quote
+*** 当使用 =request.GET.get('a')= 只能获取最后一个值
+*** 可能过 =request.GET.getlist('a')= 获取所有值
+
+* post请求
+** 前提: 在mysite1/settings.py中注释csrf行
+#+BEGIN_SRC python :results output
+# 注释
+# 'django.middleware.csrf.CsrfViewMiddleware',
+#+END_SRC
+
+** urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    path('test_get_post', views.test_get_post)
+]
+
+#+END_SRC
+** views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+
+# 通过GET请求的网页内容
+POST_FORM = '''
+<form method='post' action='/test_get_post'>
+    用户名: <input type='text' name='uname'>
+    <input type='submit' value='提交'>
+</form>
+'''
+
+# 视图函数
+def test_get_post(request):
+
+    # 通过GET请求的发送网页
+    if request.method == 'GET':
+        return HttpResponse(POST_FORM)
+    # 获取表单数据
+    elif request.method == 'POST':
+        print('uname is', request.POST['uname'])
+        return HttpResponse('post is ok')
+    else:
+        pass
+
+    return HttpResponse('--test get post is ok--')
+
+#+END_SRC

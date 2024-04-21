@@ -1,0 +1,51 @@
+---
+title: "递归"
+date: 2023-02-27T00:46:47+08:00
+summary: "阶乘"
+categories: ["Python"]
+tags: [""]
+---
+
+- 循环
+  #+begin_src python :results output
+def factorial1(n):
+    s=1
+    for i in range(2,n+1):
+        s*=i
+    return s
+
+def factorial2(n):
+    s=1
+    for i in range(n,1,-1):
+        s*=i
+    return s
+print(factorial1(5))
+print(factorial2(5))
+  #+end_src
+
+  #+RESULTS:
+  : 120
+  : 120
+
+- 递归
+  #+begin_src python :results output
+def factorial(n):
+    if n==1:
+        return 1
+    return n*factorial(n-1)
+print(factorial(5))
+  #+end_src
+
+  #+RESULTS:
+  : 120
+
+  #+begin_src python :results output
+def factorial(n,s=1):
+    if n==1:
+        return s
+    return factorial(n-1,s*n)
+print(factorial(5))
+  #+end_src
+
+  #+RESULTS:
+  : 120

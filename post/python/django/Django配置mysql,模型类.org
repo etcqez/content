@@ -1,0 +1,635 @@
+---
+title: "Django配置mysql,模型类"
+date: 2023-05-14T10:02:38+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 配置mysql
+1. pip install mysqlclient
+2. 创建数据库
+   #+begin_src sql
+create database mysite1 default charset utf8;
+   #+end_src
+3. settings.py
+   #+BEGIN_SRC python :results output
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
+        # mysql的数据库名
+         'NAME': 'mysite1',
+         'USER': 'root',
+         'PASSWORD': 'f',
+         'HOST': '127.0.0.1',
+         'PORT': '3306'
+    }
+}
+
+   #+END_SRC
+* 模型类
+- 一个模型类代表数据库中的一张数据表
+- 模型类每一个类属性都代表数据库中的一个字段
+** 创建模型类应用
+1. python manage.py startapp bookstore
+2. mysite1/settings.py
+   #+BEGIN_SRC python :results output
+INSTALLED_APPS = [
+    'bookstore',
+]
+
+   #+END_SRC
+3. cat mysite1/bookstore/models.py
+   #+BEGIN_SRC python :results output
+from django.db import models
+
+# Create your models here.
+# 一个类对应一张表
+class Book(models.Model):
+    # 两个类属性对应两个字段
+    title = models.CharField('书名', max_length=50, default='')
+    # 总位数7,小数点位数是2
+    price = models.DecimalField('价格', max_digits=7, decimal_places=2)
+
+   #+END_SRC
+4. 数据库迁移
+   迁移是django同步对模型所做更改(添加字段,删除模型等)到您的数据库模式的方式
+   - 生成迁移文件
+     python manage.py makemigrations
+   - 执行迁移脚本程序
+     python manage.py migrate
+** 示例
+** bookstore/models.py
+#+BEGIN_SRC python :results output
+from django.db import models
+
+# Create your models here.
+# 一个类对应一张表
+class Book(models.Model):
+    # 两个类属性对应两个字段
+    # 必须要有max_length
+    title = models.CharField('书名', max_length=50, default='')
+    # 总位数7,小数点位数是2
+    price = models.DecimalField('价格', max_digits=7, decimal_places=2)
+    info = models.CharField('描述', max_length=100, default='')
+
+# 一个类对应一张表
+class Author(models.Model):
+    # 必须要有max_length
+    name = models.CharField('姓名', max_length=11)
+    age = models.IntegerField('年龄')
+    email = models.EmailField('邮箱')
+
+#+END_SRC
+
+** p manage.py makemigrations;p manage.py makemigrations
+* 字段选项(models/fields/#field-options)
+** mata类
+控制模型类
+** 修改表名(bookstore_book -> book)
+*** bookstore/models.py
+#+BEGIN_SRC python :results output
+class Book(models.Model):
+    # 两个类属性对应两个字段
+    # 必须要有max_length
+    title = models.CharField('书名', max_length=50, default='')
+    # 总位数7,小数点位数是2
+    price = models.DecimalField('价格', max_digits=7, decimal_places=2)
+    info = models.CharField('描述', max_length=100, default='')
+
+    class Meta:
+        # bookstore_book -> book
+        db_table = 'book'
+
+#+END_SRC
+
+*** p manage.py makemigrations;p manage.py makemigrations
+** 综合练习
+*** 注意
+**** 新增字段必须给默认值
+**** django默认null就是false
+*** 修改模型类
+**** 要求
+***** 模型类 - Book =表名book=
+- title - CharField(50) - 书名 =唯一=
+- pub  - CharField(100) - 出版社 =非空=
+- price - DecimalField - 图书定价 总位7/小数点2位
+- market_price - 图书零售价 总位7/小数点2位
+***** 模型类 - Author =表名author=
+- name - CharField(11) - 姓名 =非空=
+- age - IntegerField - 年龄 =默认值为1=
+- email - EmailField - 邮箱 =允许为空=
+**** bookstore/models.py
+#+BEGIN_SRC python :results output
+from django.db import models
+
+# Create your models here.
+# 一个类对应一张表
+class Book(models.Model):
+    # 唯一
+    title = models.CharField('书名', max_length=50, default='', unique=True)
+    # 非空
+    # django默认null就是false
+    # 新增字段必须给默认值
+    pub=models.CharField('出版社', max_length=100, default='')
+    # 总位数7,小数点位数是2
+    price = models.DecimalField('价格', max_digits=7, decimal_places=2)
+    market_price = models.DecimalField('零售价', max_digits=7, decimal_places=2, default=0.0)
+
+    class Meta:
+        db_table = 'book'
+
+class Author(models.Model):
+    # 必须要有max_length
+    name = models.CharField('姓名', max_length=11)
+    age = models.IntegerField('年龄', default=1)
+    # 允许为空
+    email = models.EmailField('邮箱', null=True)
+
+    class Meta:
+        db_table = 'author'
+
+#+END_SRC
+* 创建数据
+** 方案1
+#+begin_src shell
+# 进入 django shell
+p manage.py shell
+from bookstore.models import Book
+b1 = Book.objects.create(title='Python', pub='清华大学出版社', price=20, market_price=25
+)
+
+#+end_src
+** 方案2
+#+begin_src shell
+p manage.py shell
+b2 = Book(title='Django', pub='清华大学出版社', price=70, market_price=75)
+b2.save()
+#+end_src
+* 查询方法
+** all()方法
+*** 用法: MyModel.objects.all()
+*** 作用: 查询MyModel实体中所有的数据
+*** 等同于 select * from table
+*** 返回值: QuerySet容器对象,内部存放MyModel实例
+*** 案例
+#+begin_src shell
+>>> from bookstore.models import Book
+>>> a1 = Book.objects.all()
+>>> a1
+<QuerySet [<Book: Book object (1)>, <Book: Book object (2)>]>
+>>> for book in a1:
+...     print(book.title)
+...
+Python
+Django
+
+#+end_src
+*** 自定义打印格式
+**** bookstore/models.py
+#+BEGIN_SRC python :results output
+class Book(models.Model):
+    # 唯一
+    title = models.CharField('书名', max_length=50, default='', unique=True)
+    # 非空
+    pub=models.CharField('出版社', max_length=100, default='')
+    # 总位数7,小数点位数是2
+    price = models.DecimalField('价格', max_digits=7, decimal_places=2)
+    market_price = models.DecimalField('零售价', max_digits=7, decimal_places=2, default=0.0)
+
+    class Meta:
+        db_table = 'book'
+
+    def __str__(self):
+        return '%s_%s_%s_%s'%(self.title, self.pub, self.price, self.market_price)
+
+
+#+END_SRC
+**** p manage.py shell
+#+begin_src shell
+>>> a1 = Book.objects.all()
+>>> al
+Traceback (most recent call last):
+  File "<console>", line 1, in <module>
+NameError: name 'al' is not defined
+>>> a1
+<QuerySet [<Book: Python_清华大学出版社_20.00_25.00>, <Book: Django_清华大学出版社_70.00_75.
+00>]>
+
+#+end_src
+
+** values('列1', '列2'...)
+*** 用法: MyModel.objects.values()
+*** 作用: 查询部分列的数据并返回
+*** 等同于 select 列1,列2 from table
+*** 返回值: QuerySet =字典=
+*** 案例
+#+begin_src shell
+>>> a2 = Book.objects.values('title','pub')
+>>> a2
+<QuerySet [{'title': 'Python', 'pub': '清华大学出版社'}, {'title': 'Django', 'pub': '清华大
+学出版社'}]>
+>>> for book in a2:
+...     print(book['title'])
+...
+Python
+Django
+
+#+end_src
+** values_list('列1', '列2'...)
+*** 用法: MyModel.objects.values_list()
+*** 作用: 查询部分列的数据并返回
+*** 等同于 select 列1,列2 from table
+*** 返回值: QuerySet =元组=
+*** 案例
+#+begin_src shell
+>>> a2 = Book.objects.values('title','pub')
+>>> a2
+<QuerySet [{'title': 'Python', 'pub': '清华大学出版社'}, {'title': 'Django', 'pub': '清华大
+学出版社'}]>
+>>> for book in a2:
+...     print(book['title'])
+...
+Python
+Django
+
+#+end_src
+#+begin_src shell
+>>> a3 = Book.objects.values_list('title','pub')
+>>> a3
+<QuerySet [('Python', '清华大学出版社'), ('Django', '清华大学出版社')]>
+>>> for book in a3:
+...     print(book[0])
+...
+Python
+Django
+
+#+end_src
+** order_by('-列','列')
+*** 用法: MyModel.objects.order_by()
+*** 作用: 与all()方法不同,它会用SQL语句的ORDER BY子句对查询结果进行根据某个字段选择性的进行排序
+*** 说明: 默认是按照升序排序,降序排序则需要在列前增加'-'表示
+*** 案例
+#+begin_src shell
+>>> a4 = Book.objects.order_by('-price')
+>>> a4
+<QuerySet [<Book: Django_清华大学出版社_70.00_75.00>, <Book: Python_清华大学出版社_20.00_25.
+00>]>
+
+#+end_src
+*** 可搭配使用
+#+begin_src shell
+>>> a5 = Book.objects.values('title').order_by('-price')
+>>> a5
+<QuerySet [{'title': 'Django'}, {'title': 'Python'}]>
+
+#+end_src
+**** 对顺序无要求
+#+begin_src shell
+>>> a6 = Book.objects.order_by('-price').values('title')
+>>> a6
+<QuerySet [{'title': 'Django'}, {'title': 'Python'}]>
+
+#+end_src
+**** 查看sql语句
+#+begin_src shell
+>>> a6 = Book.objects.order_by('-price').values('title')
+>>> a6
+<QuerySet [{'title': 'Django'}, {'title': 'Python'}]>
+>>> print(a6.query)
+SELECT `book`.`title` FROM `book` ORDER BY `book`.`price` DESC
+
+#+end_src
+** 练习1
+*** 制作查看所有书籍的页面
+**** mysite1/bookstore/views.py
+#+BEGIN_SRC python :results output
+from django.shortcuts import render
+# 导入当前路径下的models
+from .models import Book
+
+# Create your views here.
+def all_book(request):
+    all_book = Book.objects.all()
+
+    # locals()把函数内部的局部变量以字典形式传进render里
+    return render(request, 'bookstore/all_book.html', locals())
+
+#+END_SRC
+**** mysite1/bookstore/templates/bookstore/all_book.html
+#+begin_src html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>查看所有书籍</title>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <table border='1'>
+      <tr>
+        <th>id</th>
+        <th>title</th>
+        <th>pub</th>
+        <th>price</th>
+        <th>imarket_price</th>
+        <th>op</th>
+      </tr>
+      {% for book in all_book %}
+      <tr>
+        <td>{{ book.id }}</td>
+        <td>{{ book.title }}</td>
+        <td>{{ book.pub }}</td>
+        <td>{{ book.price }}</td>
+        <td>{{ book.market_price }}</td>
+        <td>
+          <a href="">更新</a>
+          <a href="">删除</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>
+
+#+end_src
+**** 主路由mysite1/mysite1/urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path, include
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    path('bookstore/', include('bookstore.urls'))
+]
+
+#+END_SRC
+**** 子路由bookstore/urls.py
+#+BEGIN_SRC python :results output
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('all_book', views.all_book)
+]
+
+#+END_SRC
+* 条件查询
+** filter
+*** 语法: MyModel.objects.filter(属性1=值1, 属性2=值2)
+*** 作用: 返回包含此条件的全部数据集
+*** 返回值: QuerySet容器对象,内部存放MyModel实例
+*** 说明:  当多个属性在一起时为 =与= 关系
+*** 案例
+#+begin_src shell
+>>> from bookstore.models import Book
+>>> b1 = Book.objects.filter(pub='清华大学出版社')
+>>> b1
+<QuerySet [<Book: Python_清华大学出版社_20.00_25.00>, <Book: Django_清华大学出版
+社_70.00_75.00>]>
+>>> print(b1.query)
+SELECT `book`.`id`, `book`.`title`, `book`.`pub`, `book`.`price`, `book`.`market_
+price` FROM `book` WHERE `book`.`pub` = 清华大学出版社
+
+#+end_src
+
+** exclude
+*** 语法: MyModel.objects.exclude(属性1=值1, 属性2=值2)
+*** 作用: 返回 =不= 包含此条件的全部数据集
+*** 返回值: QuerySet容器对象,内部存放MyModel实例
+*** 说明:  当多个属性在一起时为 =与= 关系
+** get 只能查一条数据
+*** 语法: MyModel.objects.get(属性1=值1, 属性2=值2)
+*** 作用: 返回满足条件的唯一一条数据
+*** 返回值: =object=
+*** 说明:  该方法只能返回一条数据,查询结果多余一条数据则抛出Model.MultipleObjectsReturned异常,查询结果没有数据则抛出Model.DoesNotExist异常
+*** 案例
+#+begin_src shell
+>>> b2 = Book.objects.get(pub='清华大学出版社')
+Traceback (most recent call last):
+  File "<console>", line 1, in <module>
+  File "/home/f/.local/lib/python3.11/site-packages/django/db/models/manager.py",
+ line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/f/.local/lib/python3.11/site-packages/django/db/models/query.py", l
+ine 640, in get
+    raise self.model.MultipleObjectsReturned(
+bookstore.models.Book.MultipleObjectsReturned: get() returned more than one Book
+-- it returned 2!
+
+>>> b2 = Book.objects.get(id=1)
+>>> b2
+<Book: Python_清华大学出版社_20.00_25.00>
+
+#+end_src
+** 非等值查询
+*** 查询谓词
+**** 格式以双下划线开头:
+***** __exact: 等值匹配
+****** 用法: 查询空的
+***** __contains: 包含指定值(模糊查询)
+****** 示例: Author.objects.filter(name__contains='w')
+等同于 select * from author where name like '%w%'
+****** __startswith: 以xxx开始
+****** __endswith: 以xxx结束
+***** __gt: 大于
+****** __gte: 大于等于
+****** __lt: 小于
+****** __lte: 小于等于
+***** __in
+****** 样例
+- Author.objects.filter(country__in=['中国','日本','韩国'])
+- 同 select * from author where country in ('中国','日本','韩国')
+***** __range
+****** 样例
+- Author.objects.filter(age__range=(35,50))
+- 等同于 select ... where between 35 and 50;
+** 案例
+#+begin_src shell
+>>> b3 = Book.objects.filter(id__gt=1)
+>>> b3
+<QuerySet [<Book: Django_清华大学出版社_70.00_75.00>]>
+>>> print(b3.query)
+SELECT `book`.`id`, `book`.`title`, `book`.`pub`, `book`.`price`, `book`.`market_
+price` FROM `book` WHERE `book`.`id` > 1
+
+#+end_src
+* 更新操作
+** 更新单个数据
+*** 一查,二改,三保存
+#+begin_src shell
+>>> b1 = Book.objects.get(id=1)
+>>> b1
+<Book: Python_清华大学出版社_20.00_25.00>
+>>> b1.price = 22
+>>> b1.save()
+
+#+end_src
+** 批量更新数据
+*** QuerySet对象.update(属性=值)
+*** 示例
+#+begin_src python
+# 将id大于3的所有图书价格定为0元
+books = Book.objects.filter(id__gt=3)
+books.update(price=0)
+# 将所有书的零售价定为100元
+books = Book.objects.all()
+books.update(market_price=100)
+#+end_src
+
+** 练习2
+*** 制作更新书籍的页面
+* 删除操作
+** 单个数据删除
+1. 查找查询结果对应的一个数据对象
+2. 调用这个数据对象的delete()方法实现删除
+#+BEGIN_SRC python :results output
+try:
+    auth = Author.objects.get(id=1)
+    auth.delete()
+except:
+    print('删除失败')
+#+END_SRC
+** 批量删除
+#+BEGIN_SRC python :results output
+auths = Author.objects.filter(age__gt=65)
+auths.delete()
+#+END_SRC
+** 练习3
+*** 制作删除书籍的页面
+**** 使用伪删除
+**** 在bookstore/model.py添加is_acttive字段
+#+BEGIN_SRC python :results output
+from django.db import models
+
+# Create your models here.
+# 一个类对应一张表
+class Book(models.Model):
+    # 唯一
+    title = models.CharField('书名', max_length=50, default='', unique=True)
+    # 非空
+    pub=models.CharField('出版社', max_length=100, default='')
+    # 总位数7,小数点位数是2
+    price = models.DecimalField('价格', max_digits=7, decimal_places=2)
+    market_price = models.DecimalField('零售价', max_digits=7, decimal_places=2, default=0.0)
+    # 伪删除际记
+    is_active = models.BooleanField('是否活跃', default=True)
+
+    class Meta:
+        db_table = 'book'
+
+    def __str__(self):
+        return '%s_%s_%s_%s'%(self.title, self.pub, self.price, self.market_price)
+
+class Author(models.Model):
+    # 必须要有max_length
+    name = models.CharField('姓名', max_length=11)
+    age = models.IntegerField('年龄', default=1)
+    # 允许为空
+    email = models.EmailField('邮箱', null=True)
+
+    class Meta:
+        db_table = 'author'
+
+#+END_SRC
+
+**** mysite1/bookstore/views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpRequest, HttpResponseRedirect
+from django.shortcuts import render
+from .models import Book
+
+# Create your views here.
+def all_book(request):
+    # all_book = Book.objects.all()
+    all_book = Book.objects.filter(is_active=True)
+
+    # locals()把函数内部的局部变量以字典形式传进render里
+    return render(request, 'bookstore/all_book.html', locals())
+
+def update_book(request, book_id):
+    # bookstore/update_book/1
+
+    try:
+        book = Book.objects.get(id=book_id,is_active=True)
+    except Except as e:
+        print('--update book error is %s'%(e))
+        return HttpRequest('--The book is not existed')
+    if request.method == 'GET':
+        return render(request,'bookstore/update_book.html',locals())
+    elif request.method == 'POST':
+        price = request.POST['price']
+        market_price = request.POST['market_price']
+        # 改
+        book.price = price
+        book.market_price = market_price
+        # 保存
+        book.save()
+        return HttpResponseRedirect('/bookstore/all_book')
+
+def delete_book(request):
+    book_id = request.GET.get('bood_id')
+    if not book_id:
+        return HttpRequest('---请求异常')
+    try:
+        book = Book.objects.get(id=book_id,is_active=True)
+    except Exception as e:
+        print('---delete book get error %s'%(e))
+        return HttpRequest('---The book id is error')
+    book.is_active = False
+    book.save()
+    return HttpResponseRedirect('/bookstore/all_book')
+
+#+END_SRC
+
+**** mysite1/bookstore/templates/bookstore/all_book.html
+#+begin_src html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>查看所有书籍</title>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <table border='1'>
+      <tr>
+        <th>id</th>
+        <th>title</th>
+        <th>pub</th>
+        <th>price</th>
+        <th>imarket_price</th>
+        <th>op</th>
+      </tr>
+      {% for book in all_book %}
+      <tr>
+        <td>{{ book.id }}</td>
+        <td>{{ book.title }}</td>
+        <td>{{ book.pub }}</td>
+        <td>{{ book.price }}</td>
+        <td>{{ book.market_price }}</td>
+        <td>
+          <a href="/bookstore/update_book/{{ book.id }}">更新</a>
+          <a href="/bookstore/delete_book?bood_id={{ book.id }}">删除</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>
+
+#+end_src
+**** mysite1/bookstore/urls.py
+#+BEGIN_SRC python :results output
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('all_book', views.all_book),
+    path('update_book/<int:book_id>', views.update_book),
+    path('delete_book',views.delete_book)
+]
+
+#+END_SRC

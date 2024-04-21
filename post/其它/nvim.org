@@ -1,0 +1,13 @@
+---
+title: "nvim"
+date: 2023-05-09T21:26:12+08:00
+summary: " "
+categories: [""]
+tags: [""]
+---
+
+* lua
+** 通过lua API与nvim交互的方式有三种
+1. “Vim API”继承自Vim:前命令和内置函数以及Vimscript中的用户函数。这些可以通过 =vim.cmd()= 和 =vim.fn= 进行访问。它们将在下面的lua-guide-vimscript中讨论
+2. 用C编写的用于远程插件和gui的“Nvim API”;这些函数可以通过 =vim.api= 访问
+3. 专门为Lua编写的“Lua API”。这些是可以通过 =vim.*= 访问的其他函数。

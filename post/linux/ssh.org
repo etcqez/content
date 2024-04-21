@@ -1,0 +1,27 @@
+---
+title: "Ssh"
+date: 2023-03-02T14:24:54+08:00
+summary: " "
+categories: ["Linux"]
+tags: [""]
+---
+
+* ssh
+1. 选项
+   - =-x= 远程执行图形程序
+   - =-t= 多次连接到目标
+     - 格式: ssh -t IP -t IP -t IP
+       |从第1个IP连接到第2个IP,再从第2个IP连接到第3个IP|
+   - =-o= 临时修改配置 如: =-o StrictHostChecking=no=
+   - 在远程执行本地脚本
+     #+begin_src shell
+     ssh IP bash < test2.sh
+     #+end_src
+2. 禁用首次用ssh时的询问: =sed -i.bak '/StrictHostChecking/s/.*/StrictHostChecking no/' /etc/ssh/ssh_config=
+3. ssh远程登录
+   1. ssh-keygen
+   2. ssh-copy-id NAME@IP
+   3. 添加口令: ssh-keygen -p
+   4. ssh代理(不用自己再输入私钥密码)
+      1. ssh-agent bash
+      2. ssh-add

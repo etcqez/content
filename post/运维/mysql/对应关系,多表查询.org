@@ -1,0 +1,110 @@
+---
+title: "对应关系,多表查询"
+date: 2023-05-22T14:21:00+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+* 对应关系
+1. 1对多
+
+   员工表的部门id和部门表的id,1个部门有多个员工
+
+   - 外键表信赖于主键表,员工表的department_id信赖于部门表的id
+     所以id是主键,department_id是外键
+
+2. 多对多
+
+   学生表(student)课程表(course)
+
+   - 分别取出学生id和课程id组成第三张表
+     sid信赖学生数目,cid信赖课程数目,都是外键
+* 多表查询
+- 等值连接,非等值连接
+  #+begin_src sql
+  -- 当员工工资在某个区间上时,打印工资等级
+  select e.last_name, e.salary, j.grade_level
+  from employees e,job_grades j
+  where e.salary between j.lowest_sal and j.highest_sal;
+  #+end_src
+  employees:职位表 job_grades:公资等级表
+- 自连接,非自连接
+  #+begin_src sql
+-- 当员工的管理者id和员工id相等时,查询管理者id和名字
+select emp.employee_id, emp.last_name, mgr.employee_id, mgr.last_name
+fron employees emp,employees mgr
+where emp.manager_id = mgr.employee_id;
+  #+end_src
+* 外连接
+** 左外连接
+- 示例
+  - 查询 =所有= 的员工的last_name, department_name信息
+    #+begin_src sql
+select last_name, department_name信息
+from employees e left outer join departments d
+on e.department_id = d.department_id;
+    #+end_src
+** 满外连接
+*** union
+**** union 操作符返回两个查询的结果集的并集,去除重复记录
+**** union all 操作符返回两个查询的结果集的并集, =不= 去除重
+** sql joins
+[[/img/sql-join.png]]
+*** 中图: 内连接
+#+begin_src sql
+select employee_id, department_name
+from employees e join departments d
+on e.department_id = d.department_id;
+#+end_src
+*** 左上图: 左外连接
+#+begin_src sql
+select employee_id, department_name
+from employees e left join departments d
+on e.department_id = d.department_id;
+#+end_src
+*** 右上图: 右外连接
+#+begin_src sql
+select employee_id, department_name
+from employees e right join departments d
+on e.department_id = d.department_id;
+#+end_src
+*** 左中图
+#+begin_src sql
+select employee_id, department_name
+from employees e left join departments d
+on e.department_id = d.department_id
+where d.department_id is null;
+#+end_src
+*** 右中图
+#+begin_src sql
+select employee_id, department_name
+from employees e right join departments d
+on e.department_id = d.department_id
+where e.department_id is null;
+#+end_src
+*** 左下图
+**** 方式1: 左上图 union all 右中图
+#+begin_src sql
+select employee_id, department_name
+from employees e left join departments d
+on e.department_id = d.department_id;
+union all
+select employee_id, department_name
+from employees e right join departments d
+on e.department_id = d.department_id
+where e.department_id is null;
+#+end_src
+**** 方式2: 左中图 union all 右上图
+*** 右下图
+#+begin_src sql
+select employee_id, department_name
+from employees e left join departments d
+on e.department_id = d.department_id
+where d.department_id is null;
+union all
+select employee_id, department_name
+from employees e right join departments d
+on e.department_id = d.department_id
+where e.department_id is null;
+#+end_src

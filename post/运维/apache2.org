@@ -1,0 +1,108 @@
+---
+title: "Apache2"
+date: 2023-03-03T10:54:41+08:00
+summary: " "
+categories: ["运维"]
+tags: [""]
+---
+
+* gentoo wiki
+** 安装
+#+begin_src shell
+cat /etc/portage/make.conf
+USE="apache2"
+emerge --ask --changed-use --deep @world
+#+end_src
+** 启用php支持
+#+begin_src shell
+cat /etc/conf.d/apache2
+APACHE2_OPTS="... -D PHP"
+#+end_src
+检查 /etc/apache2/modules.d/70_mod_php.conf 文件是否有内容
+   #+begin_src xml
+<IfDefine PHP>
+	# The mod_php.so symlink is controlled by
+	# eselect-php. However, the module name changed from
+	# php5_module to php7_module so we can't blindly load whatever
+	# is there. Instead we let eselect-php manage a small
+	# configuration file that loads the appropriate module.
+	#
+	# This is relative to ServerRoot (see httpd.conf).
+	Include ../../../var/lib/eselect-php/mod_php.conf
+
+	# Tell apache that mod_php should handle PHP files.
+	#
+	# NOTE: Avoiding AddHandler/AddType for security (bug
+	# #538822). Please read the related news item!
+	<FilesMatch "\.(php|php[57]|phtml)$">
+		SetHandler application/x-httpd-php
+	</FilesMatch>
+
+	# PHP source files which are meant to be displayed as
+	# syntax-highlighted source code.
+	<FilesMatch "\.phps$">
+		SetHandler application/x-httpd-php-source
+	</FilesMatch>
+
+	DirectoryIndex index.php index.phtml
+</IfDefine>
+   #+end_src
+mvs /var/www/localhost/htdocs/index.html{,.bak}
+
+验证php模块是否工作 /var/www/localhost/htdocs/index.php
+#+begin_src html
+<html>
+ <body>
+  <?php phpinfo(); ?>
+ </body>
+</html>
+#+end_src
+#+begin_src shell
+#+end_src
+open the test page: [[https://localhost/][https://localhost/]]
+** 修改php版本
+#+begin_src shell
+eselect php list apache2
+eselect php set apache2 N
+#+end_src
+** 虚拟主机
+- 创建虚拟主机
+
+  *DocumentRoot是一个文件夹*
+
+  /etc/apache2/vhosts.d/VirtualHost.conf
+  #+begin_src
+<VirtualHost *:80>
+    ServerAdmin email@site.com
+    DocumentRoot /var/www/website1
+    ServerName domainname1.com
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerAdmin email@site.com
+    DocumentRoot /var/www/website2
+    ServerName domainname2.com
+</VirtualHost>
+
+<Directory /var/www/>
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Require all granted
+</Directory>
+  #+end_src
+- 创建虚拟主机文件
+
+  *DocumentRoot是一个文件夹*
+  - =mkdir /var/www/website1=
+    #+begin_src html
+this is website1
+    #+end_src
+  - =mkdir /var/www/website2=
+    #+begin_src html
+this is website2
+    #+end_src
+- 修改虚拟主机文件权限
+  #+begin_src shell
+sudo -i
+chown apache:apache /var/www/website/*
+  #+end_src

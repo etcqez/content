@@ -1,0 +1,25 @@
+---
+title: "Mysqladmin"
+date: 2023-05-22T14:20:20+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+* mysqladmin
+#+begin_src shell
+# 修改密码
+mysqladmin -uroot -pf password mysql
+mysqladmin -uroot -pmysql password
+
+# 创建/删除数据库
+mysqladmin -uroot -pf create db1
+mysqladmin -uroot -pf drop db1
+
+# 检测健康状态
+mysqladmin -uroot -pf ping
+mysqladmin -uroot -pf ping &> /dev/null || systemctl restart mariadb
+
+#关闭数据库
+mysqladmin -uroot -pf shutdown
+#+end_src

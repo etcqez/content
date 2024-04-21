@@ -1,0 +1,46 @@
+---
+title: "内核升级"
+date: 2023-02-14T16:15:38+08:00
+categories: ["Linux"]
+---
+
+* 内核升级
+1. download
+   #+begin_src shell
+   emerge --ask --update --deep --with-bdeps=y --newuse sys-kernel/gentoo-sources
+   eselect kernel set 1
+   eselect kernel list
+   cd /usr/src/linux
+   #+end_src
+2. copy
+   #+begin_src shell
+   cp /boot/config-3.14.14-gentoo /usr/src/linux/.config
+   zcat /proc/config.gz > /usr/src/linux/.config
+   #+end_src
+3. merge
+   #+begin_src shell
+   make oldconfig
+   #字符串“（NEW）”在该行结束时标记该选项是新的。左边的方括号中的字符串是可能的答案：“Y”是，“N”不是，“m”模块，或者“？”显示帮助。推荐(或者说是默认)答案是大写（“Y”）。帮助说明解释了选项或驱动程序。
+   #当外部内核模块被安装 (如 NVIDIA 或 ZFS)，在制作内核前可能需要运行 make modules_prepare ，在这里 有它的描述。在构建上述额外的模块之前，一些模块在内核构建之前不能被安装或准备好。
+   #+end_src
+4. compare
+   #+begin_src shell
+   #另外，内核提供了一个脚本，可以干净地比较两个配置文件，即使已经移动了文件中的选项。
+   /usr/src/linux/scripts/diffconfig .config.old .config
+   #+end_src
+5. compile
+   #+begin_src shell
+   make menuconfig
+   #根据系统可用的速度和内核数量，构建内核可能需要相当长的时间。如果已知系统中 CPU 核的数量，可以使用-jN (其中 N 是可用核的数量加1)选项来加速复杂的处理过程。例如，一个双核处理器包含两个逻辑核加一个(2 + 1)。确定可用核心数量的一个简单方法是运行 nproc 命令:
+   nproc
+   make -j13
+   #+end_src
+6. install
+   #+begin_src shell
+   make modules_install
+   make install
+   sudo genkernel --lvm --install initramfs
+   #包含内核模块的包可以使用@module-rebuild命令重新编译
+   sudo emerge --ask @module-rebuild
+   #+end_src
+

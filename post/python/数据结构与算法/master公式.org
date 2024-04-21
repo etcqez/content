@@ -1,0 +1,33 @@
+---
+title: "Master公式"
+date: 2023-06-08T16:49:47+08:00
+summary: " "
+categories: ["算法"]
+tags: [""]
+---
+
+* arr[L..R]范围上求最大值
+** 求中点
+1. mid = (L+R)/2
+2. mid = L+(R-L)/2
+3. mid = L+(R-L)>>1
+#+BEGIN_SRC python :results output
+def arrmaximum(arr, L, R):
+    if L==R:
+        return arr[L]
+    mid = L + ((R - L) >> 1) # 求中点
+    leftMax = arrmaximum(arr, L, mid)
+    rightMax = arrmaximum(arr, mid+1, R)
+    return max(leftMax, rightMax)
+
+arr = [1, 88, 102, 22]
+print(arrmaximum(arr, 0, len(arr)-1))
+
+#+END_SRC
+
+#+RESULTS:
+: 102
+* master公式
+#+begin_src latex
+
+#+end_src

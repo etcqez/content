@@ -1,0 +1,19 @@
+---
+title: "偏函数"
+date: 2023-03-01T15:05:06+08:00
+summary: "对一个函数的部分参数固定,从而返回一个新包装函数,这个函数应该是关于剩余参数的一个函数"
+categories: ["Python"]
+tags: [""]
+---
+
+#+begin_src python :results output
+def add(x,y=5):
+    print(x,y)
+    return x+y
+
+newadd=partial(add,4)
+
+newadd(6),newadd(7)
+#+end_src
+
+#+RESULTS:

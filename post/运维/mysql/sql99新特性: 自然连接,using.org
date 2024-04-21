@@ -1,0 +1,22 @@
+---
+title: "Sql99新特性: 自然连接,using"
+date: 2023-05-22T16:50:34+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+* natural join
+它会帮你自动查询两张连接表中所有相同的字段,然后进行等值连接
+#+begin_src sql
+select employee_id, last_name, department_name
+from employees e natural join departments d;
+on e.department_id = d.department_id;
+#+end_src
+* using
+要求两个关联字段在关联表中名称一致,表示关联字段相等
+#+begin_src sql
+select employee_id, last_name, department_name
+from employees e join departments d
+using (department_id)
+#+end_src

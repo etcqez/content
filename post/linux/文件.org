@@ -1,0 +1,89 @@
+---
+title: "文件"
+date: 2023-02-14T21:56:56+08:00
+categories: ["Linux"]
+---
+
+* 文件
+- 文件类型: - d b c l p(pipe) s(socket)
+  - p s都是进程间的通信,不同在于p单向传输,s是双向传输
+- basename和dirname
+  #+begin_src shell
+  ➜  ~ dirname /etc/syslog-ng/syslog-ng.conf
+  /etc/syslog-ng
+  ➜  ~ basename /etc/syslog-ng/syslog-ng.conf
+  syslog-ng.conf
+  #+end_src
+- 每个文件都有3个时间
+  1. mtime: 文件修改时间
+  2. ctime(change time): 文件权限,所有者修改时间
+  3. atime(access time): 文件读取时间
+  4. 查看3个时间: =stat ety.org=
+- 查看文件类型: =file /bin/ls=
+
+* touch
+- 存在的文件刷新时间,不存在的文件创建
+- 在bash无法使用星号, *在zsh会刷新当前文件夹全部文件时间(不会改变子文件夹)*
+- 指定刷新某个时间
+  - -a 仅改变atime和ctime
+  - -m 仅改变mtime和ctime
+  - -c 如果文件不存在,则不予创建
+
+* cp
+- 格式
+  #+begin_quote
+  cp [OPTION]... [-T] SOURCE DEST
+
+  cp [OPTION]... SOURCE... DIRECTORY
+
+  cp [OPTION]... -t DIRECTORY SOURCE...
+  #+end_quote
+- *cp会导致时间,所有者发生改变,默认会覆盖文件,不拷贝链接而拷贝原文件*
+- 常用选项
+  - -p (--preserve) 保留属性,same as --preserve=mode,ownership,timestamps
+  - -R, -r, --recursive 递归拷贝,拷贝文件夹
+  - -d --no-dereference --preserve=links 不寻找源文件
+  - -a, --archive 常用于备份,same as -dR --preserve=all
+  - -f, --force 覆盖不属于该用户的文件
+    #+begin_quote
+    if an existing destination file cannot be opened, remove it and try again
+    #+end_quote
+    *在非root帐户家目录,可以删除root的文件*
+  - -u, --update 只有当 SOURCE 文件比目标文件新或者当目标文件丢失时才复制
+    #+begin_quote
+    copy only when the SOURCE file is newer than the destination file or when the destination file is missing
+    #+end_quote
+  - -b 目标存有,覆盖前先备份,后缀 *~*
+  - --backup=numbered,后缀 *~1~*
+  - -i, --interactive 覆盖前提示
+  - -v, --verbose
+  - -n, --no-clobber 不覆盖
+
+* ls
+   - 时间排序,默认 mtime (文件修改时间)
+     #+begin_src shell
+     ll -t
+     ll -t --time=ctime
+     ll -t --time=atime
+     #大小排序
+     ll -S
+     #+end_src
+
+* rename 批量修改文件名
+#+begin_src shell
+#为所有的conf文件加上.bak后缀
+rename "conf" "conf.bak" *
+rename ".bak" "" *.bak
+#+end_src
+
+* rm
+#+begin_src shell
+#删除所有隐藏文件
+rm -rf .[^.]*
+#拷贝隐藏,非隐藏到目录
+cp -av . /opt/
+#删除隐藏,非隐藏
+rm -rf * .[^.]*
+#粉碎文件
+shred -zvun 5 password.txt
+#+end_src

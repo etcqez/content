@@ -1,0 +1,21 @@
+---
+title: "列的去重"
+date: 2023-05-21T22:41:39+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+- 单列去重
+  #+begin_src sql
+select distinct department_id from employee;
+  #+end_src
+- 多列去重放最前面
+  - 错误示例
+    #+begin_src sql
+select salary, distinct department_id from employee;
+    #+end_src
+  - 正确示例
+    #+begin_src sql
+select distinct salary, department_id from employee;
+    #+end_src

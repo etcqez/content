@@ -1,0 +1,61 @@
+* 磁盘
+** 文件系统
+*** 挂载文件夹: =mount -B ​/etc/ ​/mnt/etc/=
+  *fstab挂载文件*
+    #+begin_src shell
+    #/etc/fstab
+    /etc/ /mnt/etc/ none bind 0 0
+    #+end_src
+*** 挂载文件(文件模拟分区)
+#+begin_src shell
+  dd if=/dev/zero of=/disk.img bs=1M count=100
+  mkfs.ext4 /disk.img #给文件创建文件系统
+  blkid /disk.img
+  mkdir /mnt/disk;mount /disk.img /mnt/loop #会生成/dev/loop0
+  losetup -a #查看关联
+#+end_src
+*挂载文件系统自动分配loop设备*
+查看loop设备: =losetup -a=
+fstab挂载文件
+#+begin_src shell
+#/etc/fstab
+/disk.img /data/disk xfs defaults 0 0
+#+end_src
+** swap
+- =/proc/sys/vm/swappiness= 的值决定了当内存战胜达到一定百分比时,会启用swap分区的空间
+  *越高越倾向使用swap,可以设为0这样做并不会禁止对swap的使用,只是最大限度地降低了使用swap的可能性*
+  - /etc/sysctl.d/foo.conf
+    #+begin_src shell
+      cat /etc/sysctl.d/foo.conf
+      vm.swappiness = 0
+      s sysctl -p /etc/sysctl.d/foo.conf
+    #+end_src
+- 修改swap优先级
+  机械硬盘数字靠前的速度快,sdc1比sda5速度快,更改: 挂载选项: pri=10
+** lvm
+*** 跨主机迁移卷组(拆走硬盘,接到新电脑上)
+#+begin_src shell
+umount
+#禁用卷组
+vgchange -a n vg0
+#导出卷组
+vgexport vg0
+#导入卷组
+vgimport vg0
+#启用卷组
+vgchange -ay vg0
+mount
+#+end_src
+*** 逻辑卷快照 (必须取消挂载)
+#+begin_src shell
+s lvcreate -n gentoo-snapshot -s -L 100M /dev/mapper/system-gentoo
+#恢复快照
+s lvconvert --merge /dev/mapper/system-gentoo--snapshot
+#+end_src
+*** 更换硬盘的方法
+#+begin_src shell
+#移动pe到同卷组其它成员
+pvmove /dev/sdb1
+vgreduce vg0 /dev/sdb1
+pvremove /dev/sdb1
+#+end_src

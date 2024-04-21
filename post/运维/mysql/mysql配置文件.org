@@ -1,0 +1,15 @@
+---
+title: "Mysql配置文件"
+date: 2023-05-22T14:17:24+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+- _和-相同
+- 0,OFF,FALSE意义相同,1,ON,TRUE意义相同
+- mysqld: skip-network=1
+  - 关闭网络
+  - 3306端口将关闭
+  - 但本地仍然可以通过socket连接
+  - 需要重启服务

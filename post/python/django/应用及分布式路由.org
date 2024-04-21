@@ -1,0 +1,109 @@
+---
+title: "应用及分布式路由和应用内模板"
+date: 2023-05-13T19:42:40+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 新增应用
+** 生成文件夹
+#+begin_src shell
+python manage.py startapp music
+#+end_src
+** 注册应用
+*** settings.py
+#+BEGIN_SRC python :results output
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'music'
+]
+
+#+END_SRC
+* 配置分布式路由
+** 主路由
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path, include
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    path('music/', include('music.urls'))
+]
+
+#+END_SRC
+** touch music/urls.py
+#+BEGIN_SRC python :results output
+urlpatterns = [
+    # http://127.0.0.1:8000/music/index
+    path('index', views.index_view)
+]
+
+#+END_SRC
+
+* 案例
+** cat mysite1/urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path, include
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    path('music/', include('music.urls'))
+]
+
+#+END_SRC
+
+** cat music/urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path, include
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    # http://127.0.0.1:8000/music/index
+    path('index', views.index_view)
+]
+
+#+END_SRC
+
+** cat music/views.py
+#+BEGIN_SRC python :results output
+from django.shortcuts import render
+from django.http import HttpResponse
+
+# Create your views here.
+def index_view(request):
+    return HttpResponse('这是音乐频道首页')
+
+#+END_SRC
+* 应用内模板
+** 确保        'APP_DIRS': True,
+** mkdir music/templates
+** 应用下templates和外层templates都存在时,django得想找械打规则
+1. 拣选查找外层templates目录下的模板
+2. 按INSTALLED_APPS配置下的应用顺序逐层查找
+3. 解决方法
+   1. mkdir music/templates/music
+   2. mv music/templates/index.html music/templates/music
+   3. music/views.py
+      #+BEGIN_SRC python :results output
+from django.shortcuts import render
+from django.http import HttpResponse
+
+# Create your views here.
+def index_view(request):
+    return render(request, 'music/index.html')
+
+      #+END_SRC

@@ -1,0 +1,52 @@
+---
+title: "在docker中安装phpmyadmin"
+date: 2023-05-06T10:47:26+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+
+* docker安装phpmyadmin
+1. 和远程访问一个道理，要想从容器中的phpMyAdmin访问运行在服务器上的MySQL，必须先修改MySQL配置文件， =允许非localhost的IP访问= 。
+   #+begin_src c
+打开/etc/mysql/mysql.d/50-distro-server.cnf配置文件，进行如下修改：
+bind-address = localhost
+# 找到上式，修改为
+bind-address = xxx.xx.xx.x # 你的docker0的ip地址
+# 或者修改为
+bind-address = 0.0.0.0 # 表示允许任意ip地址访问
+   #+end_src
+2. 然后，还需要将你的 =账号= 也设置为允许从远程登陆（默认为localhost）。为了完成这一操作，先通过localhost登入mysql，更改mysql数据库里的user表里对应你账号的host项，从localhost改成%。具体操作如下：
+   #+begin_src sql
+-- 将root账号（可替换成其他）的host修改为%
+select user,host from mysql.user;
+update mysql.user set host = '%' where user = 'root';
+-- mariadb
+RENAME USER "root"@"localhost" TO "root"@"%";
+-- 查看修改结果
+select host, user from mysql.user;
+   #+end_src
+3. 最后，不要忘记重启mysql
+4. 创建phpMyAdmin镜像
+   #+begin_src shell
+# PMA_HOST设置为连接的MySQL主机名或ip地址
+# PMA_PORT设置为端口号
+# 8080:80，将宿主机的8080端口映射到镜像的80端口
+docker run -d \
+    --name myadmin \
+    -e PMA_HOST=$(ip route show | grep docker0 | awk '{print $9}') \
+    -e PMA_PORT=3306 \
+    -p 8080:80 \
+    phpmyadmin/phpmyadmin
+   #+end_src
+
+   值得一提的是，这里是通过桥接网络模式（bridge mode）运行的镜像，因此在镜像中可通过docker0访问宿主网络。
+5. 此时，可以通过8080端口访问到phpMyAdmin的管理界面了，即 [[http://127.0.0.1:8080/]]
+6. One More Thing
+
+   - 把MySQL随意地暴露在网络下无疑会带来安全隐患，从安全角度考虑，应该为防火墙设置白名单规则，只有白名单的IP才能够连接数据库。
+     #+begin_src shell
+# ufw防火墙，提供一个参考思路而已
+ufw insert 1 allow from 172.17.0.3 to any port 3306
+     #+end_src

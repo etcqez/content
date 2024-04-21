@@ -1,0 +1,13 @@
+---
+title: "着重号转义关键字"
+date: 2023-05-21T23:22:10+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+- 着重号: 在1左边
+- 查询order表
+  #+begin_src sql
+select * from `order`
+  #+end_src

@@ -1,0 +1,537 @@
+---
+title: "Mysql"
+date: 2023-03-03T08:24:35+08:00
+summary: " "
+categories: ["运维"]
+tags: [""]
+---
+
+* 常用命令
+** 库管理
+#+begin_src sql
+1. 查看已有库
+    show databases;
+2. 创建库并指定字符集
+    create database db2 default charset utf8mb4;
+3. 查看当前所有库
+    select database();
+4. 切换库
+    use 库名;
+5. 查看库中已有表
+    show tables;
+6. 删除库
+    drop database 库名;
+#+end_src
+** 表管理
+#+begin_src sql
+1. 创建表并指定字符集
+    create table 表名(字段名 字段类型 xxx,)charset=utf8;
+2. 查看创建表的语句(字符集,存储引擎)
+    show create table 表名;
+3. 查看表结构
+    desc 表名;
+4. 删除表
+    drop table 表名1,表名2,表名3;
+#+end_src
+** 表记录管理
+#+begin_src sql
+1. 增
+    insert into 表名(字段名) values(),();
+2. 删
+    delete from 表名 where 条件;
+3. 改
+    update 表名 set 字段名=值,字段名=值 where 条件;
+4, 查
+    select 字段名 from 表名 where;
+#+end_src
+** 表字段管理(alter table 表名)
+#+begin_src sql
+1. 增
+    alter table 表名 add 字段名 字段类型 first | after 字段名;
+2. 删
+    alter table 表名 drop 字段名;
+3. 改
+    alter table 表名 modify 字段名 新类型;
+4. 表重命名
+    alter table 表名 rename 新表名
+#+end_src
+* 技巧
+1. %和_是通配符
+2. =show variables like 'skip_name';=
+   - 查询变量, *mariadb无此变量*
+   - =skip_name_resolve = on= 禁止主机名解析,建议使用
+3. 查询3个字符的变量
+   #+begin_src sql
+   show variables like '___';
+   #+end_src
+4. 数据库存在也不会报错
+   #+begin_src sql
+create database if not exists db1;
+drop database if exists db1;
+   #+end_src
+6. *查看字符集*
+   #+begin_src sql
+-- 查看DBMS的字符集
+show variables like 'character_%';
+-- 查看比较规则
+show variables like 'collation_%';
+   #+end_src
+7. 脚本模式
+   #+begin_src shell
+ mysql -uroot -pf < /path/to/somefile.sql
+ mysql> source somefile.sql
+   #+end_src
+8. 去重:distinct
+   #+begin_src sql
+ use test;
+ create table repetition(id int);
+ insert into repetition values(1);
+ insert into repetition values(1);
+ insert into repetition values(1);
+ select * from repetition;
+ -- 去重
+ select distinct * from repetition;
+   #+end_src
+9. 着重号 ``
+   - 如果出现了字段名,表名跟关键字重名,要明确加上着重号,表示就是一个普通的字段,表名
+10. 查询常数
+    #+begin_src sql
+-- 查询尚硅谷的全部学生(全部学生都在尚硅谷)
+select '尚硅谷',student_id,student_name from school;
+   #+end_src
+10. 查询正在使用的数据库
+    #+begin_src sql
+select database();
+-- 查看用户:
+select user();
+    #+end_src
+* root@localhost
+- root@localhost和root@127.0.0.1是不同账号
+- 前者走socket,后者走tcp/ip
+* 修改mysql的PS1
+- man mysql
+  #+begin_quote
+       •   Use an option file.  You can set the prompt option in the [mysql] group of any MySQL option file, such as /etc/my.cnf or the .my.cnf file in your home directory. For
+
+           example:
+
+               [mysql]
+
+               prompt=(\\u@\\h) [\\d]>\\_
+  #+end_quote
+* 常用选项
+1. =-A= 禁止补全
+2. =-P= port
+3. =-S= socket
+4. =-D= 指定默认数据库
+   - 默认不写也是
+     - =mysql -uroot -pf mysql=
+5. =-C= 启用压缩
+6. =-e= 执行sql命令
+   - =mysql -uroot -pf -e "show databases;status;"=
+7. =-V= 查看版本
+8. =-v= verbose
+9. =--print-defaults=
+   #+begin_src shell
+mysql --print-defaults
+mysqld --print-defaults
+   #+end_src
+* 配置文件
+- _和-相同
+- 0,OFF,FALSE意义相同,1,ON,TRUE意义相同
+- mysqld: skip-network=1
+  - 关闭网络
+  - 3306端口将关闭
+  - 但本地仍然可以通过socket连接
+  - 需要重启服务
+* 二进制安装
+1. useradd -r -d /data/mysqldb -s /sbin/nologin mysql
+   *系统账号默认不会创建家目录*
+2. tar xvf mariadb-num-linux-x86_64,tar.gz -C /usr/local/
+3. cd /usr/local/
+4. ln -s mariadb-num-linux-x86_64 mysql
+5. chow -R root: mysql/
+6. 将/usr/local/mysql/bin加入环境变量
+7. mkdir /data/mysqldb
+8. chown mysql.mysql /data/mysqldb
+9. chmod 770 /data/mysqldb
+10. cp support-files/my-huge.cnf /etc/my.cnf
+    选择my-huge.cnf作为主要配置
+11. scripts/mysql_install_db --datadir=/data/mysqldb --user=mysql
+    生成数据库文件
+    - 可能需要安装的包
+      1. perl-Data-Dumper
+      2. libaio
+12. 修改配置文件,在配置文件中指定数据库
+    #+begin_src cnf
+[mydqld]
+datadir = /data/mysqldb
+socket = /usr/local/mysql/mysql.sock
+[client]
+socket = /usr/local/mysql/mysql.sock
+    #+end_src
+13. cp support-files/mysql.server /etc/init.d/mysqld 拷贝服务文件
+14. chkconfig --add mysqld
+    开机启动
+15. service mysqld start
+    由于sock文件在/usr/local/mysql/mysql.sock没有写权限,启动失败
+16. setfacl -R -m u:mysql:rwx /usr/local/mysql
+17. mysql_secure_installation
+    取消sock路径的修改
+* 列出所有子命令: help
+- system: 执行shell命令
+  - system hostname
+  - 或 =\! hostname=
+- status
+  - 查看状态
+  - 包括版本,当前用户,当前使用数据库,编码
+  - 或 =\s=
+* 客户端命令与服务器命令
+1. 客户端命令
+   - 通过客户端执行
+   - help下的命令
+   - *不需要加分号*
+2. 服务器命令
+   - 服务器端执行
+   - *需要加分号*
+* mysqladmin
+#+begin_src shell
+mysqladmin -uroot -pf password mysql
+mysqladmin -uroot -pmysql password
+
+mysqladmin -uroot -pf create db1
+mysqladmin -uroot -pf drop db1
+
+#检测健康状态
+mysqladmin -uroot -pf ping
+mysqladmin -uroot -pf ping &> /dev/null || systemctl restart mariadb
+
+#关闭数据库
+mysqladmin -uroot -pf shutdown
+#+end_src
+* 对应关系
+1. 1对多
+
+   员工表的部门id和部门表的id,1个部门有多个员工
+
+   - 外键表信赖于主键表,员工表的department_id信赖于部门表的id
+     所以id是主键,department_id是外键
+
+2. 多对多
+
+   学生表(student)课程表(course)
+
+   - 分别取出学生id和课程id组成第三张表
+     sid信赖学生数目,cid信赖课程数目,都是外键
+* 多表查询
+- 简单的多表查询
+  #+begin_src sql
+  select emp.employee_id,dept,depart_name,emp.department_id
+  from employees emp,departments dept
+  where emp.department_id = dept.department_id;
+  -- 当员工的部门id和部门表的部门id相等时,打印部门名字
+  #+end_src
+  employees:职位表 departments:公寓表
+- 等值连接,非等值连接
+  #+begin_src sql
+  select e.last_name,e.salary,j.grade_level
+  from employees e,job_grades j
+  where e.salary >= j.lowest_sal and e.highest_sal;
+  -- 当员工工资在某个区间上时,打印工资等级
+  #+end_src
+  employees:职位表 job_grades:公资等级表
+- 自连接,非自连接
+  #+begin_src sql
+select emp.employee_id,emp.last_name,mgr.employee_id,mgr.last_name
+fron employees emp,employees mgr
+where emp.manager_id = mgr.employee_id;
+-- 当员工的管理者id和员工id相等时,查询管理者id和名字
+  #+end_src
+- 内连接
+  #+begin_src sql
+  select emp.employee_id,dept,depart_name,emp.department_id
+  from employees emp join departments dept
+  on emp.department_id = dept.department_id;
+  -- 当员工的部门id和部门表的部门id相等时,打印部门名字
+  #+end_src
+- 左外连接
+  #+begin_src sql
+  select emp.employee_id,dept,depart_name,emp.department_id
+  from employees emp left join departments dept
+  on emp.department_id = dept.department_id;
+  -- 当员工的部门id和部门表的部门id相等时,打印部门名字
+  #+end_src
+- 右外连接
+  #+begin_src sql
+  select emp.employee_id,dept,depart_name,emp.department_id
+  from employees emp right join departments dept
+  on emp.department_id = dept.department_id;
+  -- 当员工的部门id和部门表的部门id相等时,打印部门名字
+  #+end_src
+- union,union all
+  连接两个表,但union会去重
+- 满外连接
+* 规范
+1. 字符串单引,列别名双引
+2. 关键字大写
+* 普通语法
+1. 注释
+   1. #
+   2. /*  */
+   3. -- (其它数据库通用)
+2. 转义符:\
+* databases
+#+begin_src sql
+show databases;
+use database;
+create database database;
+drop database database;
+#+end_src
+* tables
+#+begin_src sql
+show tables;
+create table table(id int,name varchar(15));
+insert into table values(1,'Tom');
+select * from table;
+
+# 显示表结构
+describe table;
+desc table;
+#+end_src
+* select
+#+begin_src sql
+select 5+4;
+select 5+4 from dual;
+#+end_src
+- select 字断名 from 表名;
+  #+begin_src sql
+use mysql;
+select cost_name,last_update from engine_cost;
+  #+end_src
+- 列的别名
+  #+begin_src sql
+use mysql;
+select cost_name cname,last_update lupdate from engine_cost;
+select cost_name AS cname,last_update AS lupdate from engine_cost;
+select cost_name AS "cost名",last_update AS "日期" from engine_cost;
+  #+end_src
+  *别名用双引*
+- 空值参于运算
+  #+begin_src sql
+create table NULLoperation(value int,times int);
+show create table NULLoperation\G
+select value,times,value*times from NULLoperation;
+insert into NULLoperation values(3,null);
+select value,times,value*times from NULLoperation;
+select value,times,value*ifnull(times,0) from NULLoperation;
+-- 空植用零替换: ifnull(times,0)
+  #+end_src
+  *空值参于运算的结呆一定为空*
+  *空值不等于零*
+- 过滤条件
+  #+begin_src sql
+select 1,value,times,value*ifnull(times,1) from NULLoperation where times=10;
+  #+end_src
+  *where放在from的后面*
+* 比较
+- 不等于:<>,同!=
+- 安全等于:*<=>*
+  可以对NULL进行判断,而不返回NULL,等号有NULL参于就返回NULL
+- is null, is not null, isnull()
+- least(), greatest()
+- beteen and 包含边界
+- in (), not in ()
+- not/!, and/&&, or/||, xor(逻辑异或)
+  *not用在where后面
+- like:模糊查询
+  - *like放在where后面过滤输出结果,多个条件用or,and*
+    select 1,value,times,value*ifnull(times,1) from NULLoperation where times like '1%';
+  - select from where like '%a%'
+    *%号同linux的星*
+  - select from where like '_a%' (查询第二个字符是a的结果)
+    *_同正则表达式的点*
+- regexp/rlike:正则表达式
+  - *regexp/rlike放在where后面过滤输出结果,多个条件用or,and*
+    select 1,value,times,value*ifnull(times,1) from NULLoperation where times regexp '1.';
+* 排序
+- order by 字段 [asc] (ascend)
+- order by 字段 desc (descend)
+- 列的别名只能在order by中使用,不能在where中使用
+- 二级排序
+  *在一级排序的结果相同时,再进行排序*
+  - order by 字段 desc 字段 [asc]
+    *升序可省略asc
+* 分页
+- limit 偏移量,条数
+  - eg limit [0],20 (每页显示20条数据,此时显示第1页)
+    *偏移量为零可省略*
+  - eg limit 20,20 (每页显示20条数据,此时显示第2页)
+  - eg limit 40,20 (每页显示20条数据,此时显示第3页)
+    公式: limit (pageNo-1)*pageSize,pageSize;
+- mysql8.0新特性: limit 条数 offset 偏移量
+* 约束
+- 主键约束
+  #+begin_src sql
+create table user(
+             id int primary key auto_increment comment '主键',
+             name varchar(10) not null unique comment '姓名',
+             age int check ( age > 0 && age <= 120 ) comment '年龄',
+             status char(1) default '1' comment '状态',
+             gender char(1) comment '性别'
+) comment '用户表';
+
+  #+end_src
+
+- 外键约束
+  #+begin_src sql
+alter table emp add constraint fk_emp_dept_id foreign key (dept_id) references dept(id);
+  #+end_src
+  - emp表的dept_id信赖dept表的id
+  - 删除
+    #+begin_src sql
+alter table emp drop foreign key fk_emp_dept_id
+    #+end_src
+* 事务
+- 查询
+  #+begin_src sql
+(root@localhost) [test]> select @@autocommit;
++--------------+
+| @@autocommit |
++--------------+
+|            1 |
++--------------+
+1 row in set (0.00 sec)
+  #+end_src
+- set @@autocommit = 0;
+  手动提交
+  #+begin_src sql
+set @@autocommit = 0;
+commit;
+-- 回滚事务
+rollback;
+  #+end_src
+- start transaction;
+- 事务隔离级别
+  - 查询
+    #+begin_src sql
+    (root@localhost) [test]>  select @@transaction_isolation;
+    +-------------------------+
+    | @@transaction_isolation |
+    +-------------------------+
+    | REPEATABLE-READ         |
+    +-------------------------+
+    1 row in set (0.00 sec)
+    #+end_src
+  - set session transaction isolation level read_uncommitted;
+* 日志
+- 二进制日志
+  *对库的修改*
+  #+begin_src sql
+(root@localhost) [(none)]> show variables like '%log_bin%';
++---------------------------------+---------------------------------+
+| Variable_name                   | Value                           |
++---------------------------------+---------------------------------+
+| log_bin                         | ON                              |
+| log_bin_basename                | /var/lib/mysql/gentoo-bin       |
+| log_bin_index                   | /var/lib/mysql/gentoo-bin.index |
+| log_bin_trust_function_creators | OFF                             |
+| log_bin_use_v1_row_events       | OFF                             |
+| sql_log_bin                     | ON                              |
++---------------------------------+---------------------------------+
+6 rows in set (0.00 sec)
+  #+end_src
+  - 查看日志格式
+    #+begin_src sql
+(root@localhost) [(none)]> show variables like '%binlog_format';
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| binlog_format | ROW   |
++---------------+-------+
+1 row in set (0.01 sec)
+    #+end_src
+  - mysqlbinlog gentoo-bin.000003 -v
+    格式为ROW要加-v
+  - 删除日志
+    - reset master
+      删除全部
+    - purge master logs to 'binlog.***'
+      删除***之前的所有日志
+    - purge master logs before 'yyyy-mm-dd hh:mm:ss'
+  - 过期时间
+    #+begin_src sql
+(root@localhost) [(none)]> show variables like '%binlog_expire%';
++-------------------------------+---------+
+| Variable_name                 | Value   |
++-------------------------------+---------+
+| binlog_expire_logs_auto_purge | ON      |
+| binlog_expire_logs_seconds    | 2592000 |
++-------------------------------+---------+
+2 rows in set (0.00 sec)
+    #+end_src
+    30天后会自动删除
+- 查询日志
+  *对库的查询*
+  #+begin_src sql
+(root@localhost) [(none)]> show variables like '%general%';
++------------------+---------------------------+
+| Variable_name    | Value                     |
++------------------+---------------------------+
+| general_log      | OFF                       |
+| general_log_file | /var/lib/mysql/gentoo.log |
++------------------+---------------------------+
+2 rows in set (0.00 sec)
+  #+end_src
+  *查询日志默认关闭*
+- 慢查询日志
+  - 开启慢查询
+    #+begin_src cnf
+#开启慢查询
+slow_query_log=1
+#慢查询时间参数
+long_query_time=2
+    #+end_src
+* 主从复制
+- 主库配置
+  1. /etc/my.cnf
+    #+begin_src cnf
+server-id=1
+read-only=0
+    #+end_src
+  2. 创建用户
+     #+begin_src sql
+create user 'f'@'%' identified with mysql_native_password by 'f';
+     #+end_src
+  3. 授于权限
+     #+begin_src sql
+grant replication slave on *.* to 'f'@'%';
+     #+end_src
+  4. 查看二进制日志坐标
+     #+begin_src sql
+show master status;
+     #+end_src
+- 从库配置
+  1. /etc/my.cnf
+    #+begin_src cnf
+server-id=2
+read-only=1
+    #+end_src
+  2. 8.0.23之前
+     #+begin_src sql
+change replication source to source_host='xxx.xxx',source_user='xxx',source_log_file='xxx',source_log_pos=xxx;
+     #+end_src
+     如果是8.0.23之前的版本,执行如下sql:
+     #+begin_src sql
+change replication master to master_host='xxx.xxx',master_user='xxx',master_log_file='xxx',master_log_pos=xxx;
+     #+end_src
+  3. 开启同步操作
+     #+begin_src sql
+start replica; #8.0.22之后
+start slave; #8.0.22之前
+     #+end_src
+  4. 查看主从同步状态
+     #+begin_src sql
+start replica status\G; #8.0.22之后
+start slave status\G; #8.0.22之前
+     #+end_src
+     - 查看replica_io_running和replica_sql_running是否为yes

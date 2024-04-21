@@ -1,0 +1,44 @@
+---
+title: "递归函数"
+date: 2023-02-25T13:46:36+08:00
+summary: "函数调用次数替代循环次数"
+---
+
+#+begin_src python :results output
+def fib1(n):
+    a=b=1
+    for i in range(n-2):
+        a,b=b,a+b
+        print(b)
+fib1(10)
+#+end_src
+
+#+RESULTS:
+: 2
+: 3
+: 5
+: 8
+: 13
+: 21
+: 34
+: 55
+
+#+begin_src python :results output
+def fib3(n,a=1,b=1):
+    if n<3:
+        return b
+    a,b=b,a+b
+    print(b)
+    return fib3(n-1,a,b)
+fib3(10)
+#+end_src
+
+#+RESULTS:
+: 2
+: 3
+: 5
+: 8
+: 13
+: 21
+: 34
+: 55

@@ -1,0 +1,76 @@
+---
+title: "F对象和Q对象"
+date: 2023-05-15T14:32:43+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* F对象
+一个F对象代表数据库中某条记录的字段的信息
+** 导入: from django.db.models import F
+** 示例
+*** 更新Book实例中所有的零售价涨10元
+#+BEGIN_SRC python :results output
+Book.object.all().update(market_price=F('market_price')+10)
+#+END_SRC
+*** 对数据库两个字段的值进行比较,列出哪些书的零售价高于定价
+**** p manage.py shell
+#+BEGIN_SRC python :results output
+>>> from bookstore.models import Book
+>>> from django.db.models import F
+
+# 忘记加双下划线: market_price__gt
+>>> Book.objects.filter(market_price_gt=F('price'))
+Traceback (most recent call last):
+  File "<console>", line 1, in <module>
+  File "/home/f/.local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, i
+n manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/f/.local/lib/python3.11/site-packages/django/db/models/query.py", line 1436, i
+n filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/f/.local/lib/python3.11/site-packages/django/db/models/query.py", line 1454, i
+n _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "/home/f/.local/lib/python3.11/site-packages/django/db/models/query.py", line 1461, i
+n _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "/home/f/.local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 149
+8, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/f/.local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 152
+9, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/home/f/.local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 137
+9, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/f/.local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 118
+9, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/f/.local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 167
+7, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'market_price_gt' into field. Choi
+ces are: id, is_active, market_price, price, pub, title
+>>> Book.objects.filter(market_price__gt=F('price'))
+<QuerySet [<Book: Django_清华大学出版社_70.00_75.00>]>
+
+#+END_SRC
+* Q对象
+当在获取查询结果集使用复杂的逻辑或|,逻辑非~等操作时可以借助于Q对象进行操作
+** 示例
+*** 想找出定价低于20元或清华大学出版社的全部书,可以写成
+#+BEGIN_SRC python :results output
+>>> from django.db.models import Q
+>>> Book.objects.filter(Q(market_price__gt=20)|Q(pub='清华大学出版社'))
+<QuerySet [<Book: Python_清华大学出版社_30.00_25.00>, <Book: Django_清华大学出版社_70.00_75.
+00>]>
+
+#+END_SRC

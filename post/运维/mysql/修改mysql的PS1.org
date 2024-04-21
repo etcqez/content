@@ -1,0 +1,18 @@
+---
+title: "修改mysql的PS1"
+date: 2023-05-22T14:15:21+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+- man mysql
+  #+begin_quote
+       •   Use an option file.  You can set the prompt option in the [mysql] group of any MySQL option file, such as /etc/my.cnf or the .my.cnf file in your home directory. For
+
+           example:
+
+               [mysql]
+
+               prompt=(\\u@\\h) [\\d]>\\_
+  #+end_quote

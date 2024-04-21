@@ -1,0 +1,23 @@
+---
+title: "静态文件"
+date: 2023-05-13T19:17:50+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 配置静态文件的url和路径
+** settings.py
+#+BEGIN_SRC python :results output
+STATIC_URL = 'static/'
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),) # 静态文件的路径是个元组,必须加,
+
+#+END_SRC
+* 创建文件夹
+static,和manager.py同级
+* 案例
+#+begin_src html
+{% load static %}
+<img src="{% static 'image/django2.jpg' %}"
+     width="200px" heigh="200px">
+#+end_src

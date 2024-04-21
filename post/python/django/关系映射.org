@@ -1,0 +1,84 @@
+---
+title: "关系映射"
+date: 2023-05-16T11:03:58+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 一对一
+** 配置
+*** python manager.py startapp oto
+*** 注册: mysite1/sittings
+#+BEGIN_SRC python :results output
+INSTALLED_APPS = [
+    'oto',
+]
+
+#+END_SRC
+*** oto/models.py
+#+BEGIN_SRC python :results output
+from django.db import models
+
+# Create your models here.
+class Author(models.Model):
+    name = models.CharField('姓名', max_length=11)
+
+class Wife(models.Model):
+    name = models.CharField('姓名', max_length=11)
+    # 级联删除
+    author = models.OneToOneField(Author, on_delete=models.CASCADE)
+
+#+END_SRC
+*** 生成表: python manage.py makemigrations;python manage.py migrate
+*** 查看表
+#+begin_src sql
+MariaDB [mysite1]> desc oto_wife;
++-----------+-------------+------+-----+---------+----------------+
+| Field     | Type        | Null | Key | Default | Extra          |
++-----------+-------------+------+-----+---------+----------------+
+| id        | bigint(20)  | NO   | PRI | NULL    | auto_increment |
+| name      | varchar(11) | NO   |     | NULL    |                |
+| author_id | bigint(20)  | NO   | UNI | NULL    |                |
++-----------+-------------+------+-----+---------+----------------+
+3 rows in set (0.001 sec)
+
+#+end_src
+** 创建数据
+*** django shell
+#+BEGIN_SRC python :results output
+In [5]: from oto.models import *
+In [5]: a1 = Author.objects.create(name='wang')
+In [5]: w1 = Wife.objects.create(name='wangfuren', author=a1)
+In [9]: a2 = Author.objects.create(name='guo')
+In [10]: w2 = Wife.objects.create(name='guofuren', author_id=2)
+#+END_SRC
+
+** 查询数据
+*** 正向查询
+#+BEGIN_SRC python :results output
+In [13]: w2
+Out[13]: <Wife: Wife object (2)>
+
+In [15]: w2.author
+Out[15]: <Author: Author object (2)>
+
+In [16]: w2.author.name
+Out[16]: 'guo'
+
+#+END_SRC
+
+*** 反向查询
+#+BEGIN_SRC python :results output
+In [20]: a2
+Out[20]: <Author: Author object (2)>
+
+In [21]: a2.wife
+Out[21]: <Wife: Wife object (2)>
+
+In [22]: a2.wife.name
+Out[22]: 'guofuren'
+
+#+END_SRC
+* 一对多
+待完成

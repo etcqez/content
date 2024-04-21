@@ -1,0 +1,31 @@
+---
+title: "Vim"
+date: 2023-03-05T09:39:44+08:00
+summary: " "
+categories: ["Vim"]
+tags: [""]
+---
+
+* 缓冲区和参数列表
+#+begin_src shell
+:e file
+:ls!
+# 创建一个无名缓冲区
+:enew
+
+#创建本地参数列表
+:arglocal
+#list
+:args
+:next :previous :first :last
+:argadd :argdelete :args
+#+end_src
+* 寄存器
+[[/img/2023-03-05_09-35.png]]
+* 标记
+[[/img/2023-03-05_09-55.png]]
+* 补全
+#+begin_src shell
+<c-x><c-l> 整行
+<c-x><c-f> 文件名
+#+end_src

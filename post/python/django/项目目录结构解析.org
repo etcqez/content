@@ -1,0 +1,69 @@
+---
+title: "项目目录结构解析"
+date: 2023-04-27T18:31:26+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 目录树
+#+begin_src c
+ f@f-b450mk  ~/mysite1  tree
+.
+├── db.sqlite3
+├── manage.py
+└── mysite1
+    ├── asgi.py
+    ├── __init__.py
+    ├── __pycache__
+    │   ├── __init__.cpython-310.pyc
+    │   ├── settings.cpython-310.pyc
+    │   ├── urls.cpython-310.pyc
+    │   ├── views.cpython-310.pyc
+    │   └── wsgi.cpython-310.pyc
+    ├── settings.py
+    ├── urls.py
+    ├── views.py
+    └── wsgi.py
+
+#+end_src
+
+* 项目目录结构解析
+- manage.py
+  - 此文件是项目管理的主程序,在开发阶段用于管理整个项目的开发运行和调试
+  - manage.py包含项目管理的子命令,如:
+    - python manager.py runserver 启动服务
+    - python manager.py startapp 创建应用
+    - python manager.py migrate 数据库迁移
+    - ...
+- mysite1 项目包的主文件夹(默认与项目名称一致)
+  1. __init__.py
+     - 包初始化文件,当此项目包被导入(import)时此文件会自动运行
+  2. wsgi.py
+     - WSGI即Web Server Gateway interface
+     - WEB服务网关接口的配置文件,仅部署项目时使用
+  3. urls.py
+     - 项目的基础路由配置文件.所有的动态路径必须先走该文件进行匹配
+  4. settings.py
+     - Django项目的配置文件.引配置文件中的一些全局变量将为Djjango框架的运行传递一些参数
+* settings.py
+- BASE_DIR
+  - 绑定当前项目的绝对路径
+  - BASE_DIR: /home/f/mysite1
+- SECRET_KEY
+  - 随机生成的加密密钥
+- DEBUG = True
+  - 调试开关
+- INSTALLED_APPS
+  - 安装的应用
+- MIDDLEWARE
+  - 中间件
+- ROOT_URLCONF
+  - 根级的url位置
+- LANGUAGE_CODE = 'en-us'
+  - 语言
+  - LANGUAGE_CODE = 'zh-hans'
+    - 显示中文
+- TIME_ZONE = 'UTC'
+  - 时区
+  - TIME_ZONE = 'Asia/Shanghai'

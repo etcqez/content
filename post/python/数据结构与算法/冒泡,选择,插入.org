@@ -1,0 +1,103 @@
+---
+title: "冒泡,选择,插入"
+date: 2023-06-07T13:12:09+08:00
+summary: " "
+categories: ["算法"]
+tags: [""]
+---
+
+* 冒泡
+#+BEGIN_SRC python :results output
+def bubble(arr):
+    if not arr or len(arr) <2:
+        return
+    for e in range(len(arr)-1 ,0, -1):
+        for i in range(0,e):
+            if arr[i] > arr[i+1]:
+                swap(arr, i, i+1)
+
+def swap(arr,i,j):
+    arr[i] = arr[i] ^ arr[j]
+    arr[j] = arr[i] ^ arr[j]
+    arr[i] = arr[i] ^ arr[j]
+arr = [3,4,2,1]
+bubble(arr)
+print(arr)
+
+#+END_SRC
+
+#+RESULTS:
+: [1, 2, 3, 4]
+
+* 选择
+#+BEGIN_SRC python :results output
+def select(arr):
+    if not arr or len(arr) <2:
+        return
+    for e in range(0, len(arr)-1):
+        minIndex = e;
+        for i in range(e+1, len(arr)):
+            minIndex = i if arr[i] < arr[minIndex] else minIndex
+        swap(arr, e, minIndex)
+
+def swap(arr,i,j):
+    tmp = arr[i]
+    arr[i] = arr[j]
+    arr[j] = tmp
+arr = [3,1,4,5]
+select(arr)
+print(arr)
+
+#+END_SRC
+
+#+RESULTS:
+: [1, 3, 4, 5]
+** note: 此时不能使用位运算交换两值,因为在调用swap时,i,j(选择的最小值索引和找出的最小值索引可能相同,调用会将数组清零)
+* 插入
+#+BEGIN_SRC python :results output
+def insert(arr):
+    for i in range(1, len(arr)):
+        key = arr[i]
+        j = i - 1
+        while j>=0 and key < arr[j]:
+            arr[j+1] = arr[j]
+            j -=1
+        arr[j+1] = key
+    return arr
+
+arr = [12, 11, 13, 5, 6]
+print(insert(arr))
+
+#+END_SRC
+
+#+RESULTS:
+: [5, 6, 11, 12, 13]
+
+* 对数器
+** 生成随机长度,随机数值的数组
+#+BEGIN_SRC python :results output
+import random
+def generateRandomArray(maxSize, maxValue):
+    arr = []
+    # 产生[0,maxsize]
+    size = random.randint(0,maxSize)
+    for i in range(0,size):
+        # 两个小于maxValue的随机数相减,是为了得到负数
+        arr.append(random.randint(0,maxValue) - random.randint(0,maxValue))
+    return arr
+
+print(generateRandomArray(2,3))
+
+#+END_SRC
+
+#+RESULTS:
+: [-3, 3]
+
+** java
+#+begin_src java
+// Math.random() -> [0,1)所有小数
+// Math.random() * N -> [0,N)所有小数
+// (int)(Math.random() * N) -> [0,N-1]所有小数
+// (int)(Math.random() * (maxSize + 1)) -> [0,maxSize]所有小数
+
+#+end_src

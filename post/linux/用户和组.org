@@ -1,0 +1,37 @@
+---
+title: "用户和组"
+date: 2023-02-14T23:05:13+08:00
+categories: ["Linux"]
+---
+
+* 用户和组
+** passwd,shaow,group,gshadow
+#+begin_src shell
+sudo getent shadow root
+getent passwd root
+#+end_src
+** useradd
+- =-r= 创建系统用户
+** 新建用户的相关文件
+1. /etc/default/useradd
+2. /etc/skel/*
+3. /etc/login.defs
+** 批量创建
+#+begin_src shell
+#批量创建用户
+newusers passwd格式文件
+#批量改密码
+echo name:password |chpasswd
+cat p.txt |chpasswd
+#+end_src
+1. 批量创建用户
+   #+begin_src shell
+   echo user{1..10} |xargs -n1 useradd
+   echo user{1..10} |xargs -n1 userdel -r
+   getent passwd
+   #+end_src
+** 组
+- 查看用户所有的组: =groups f=
+- 查看组的成员: =groupmems -l -g video=
+** 权限
+- =chmod -R a+X dir=,给目录加上可执行权限,但不影响文件

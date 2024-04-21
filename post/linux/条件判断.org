@@ -1,0 +1,74 @@
+---
+title: "条件判断"
+date: 2023-02-15T01:06:52+08:00
+categories: ["Linux"]
+---
+
+* test
+=help test=
+- 选项
+  - -v 判断变量是否定义,无法判断是否为空
+  - -R 判断变量是否定义,或者为空
+  - -L 判断文件是否为软链接, =[ -L /lib ]=
+  - -a -e 判断文件是否存有
+- =[]=
+  - 在比较字符串时,建议放在""中
+  - =[ "$string" ]= 字符串是否不空
+- =[​[]]=
+  - *建议,当使用正则表达式或通配符使用,一般情况使用[]*
+  - 与[]的区别
+    - 比较字符串用 ==== 支持通配符
+    - 可以用正则表达式 ==~=
+  - 结论
+    #+begin_src shell
+    #==右侧的*,想做为通配符,不要加"",只想做为*,需要加""或转义
+    [[ == * ]]
+    #+end_src
+
+* case in
+- yes,no脚本
+    #+begin_src shell
+    read -p "Do you agree(yes/no)?" INPUT
+    case $INPUT in
+    [Yy]|[Yy][Ee][Ss])
+        echo "You input is YES"
+        ;;
+    [Nn]|[Nn][On])
+        echo "You input is NO"
+        ;;
+    ,*)
+        echo "Input false,please input yes or no!"
+    esac
+    #+end_src
+- while read
+* while read
+#+begin_src shell
+WARNING=100
+ss -nt |sed -En '/^ESTAB/s#.*[: ]([^:]+[0-9]):[0-9]+#\1#p' |sort |uniq -c |while read count ip;do
+    if [ $count -gt $WARNING ];then
+    iptables -A INPUT -s $ip -j REJECT
+    fi
+done
+#+end_src
+* select循环与菜单
+ =help select=
+- select与if语法一样
+  - =select variable in list; do  done=
+- 用户输入的变量放入 =REPLY= 中
+- example
+ #+begin_src shell
+ PS3="请输入菜的编号"
+ select MENU in 鲍鱼 满汉全席 龙虾 燕窝 帝王蟹 退出;do
+            case $REPLY in
+                1|3) echo "$MENU price is \$10"
+                    ;;
+                2) echo "$MENU price is \$1000"
+                    ;;
+                4|5) echo "$MENU price is \$20"
+                     ;;
+                6) break
+                   ;;
+                ,*) echo "点错了,没有这道菜"
+             esac
+ done
+ #+end_src

@@ -1,0 +1,68 @@
+---
+title: "异或运算"
+date: 2023-06-06T21:42:13+08:00
+summary: " "
+categories: ["数据结构与算法"]
+tags: [""]
+---
+
+* 异或运算
+** 相同为0,不同为1
+*** 可理解为无进位相加
+** 性质
+*** 0^N = N
+*** N^N = 0
+* 交换两个值
+#+BEGIN_SRC python :results output
+a = 1
+b = 2
+a = a^b
+b = a^b
+a = a^b
+print(a,b)
+#+END_SRC
+
+#+RESULTS:
+: 2 1
+** 类似于
+#+BEGIN_SRC python :results output
+a = 1
+b = 2
+a = a+b
+b = a-b
+a = a-b
+print(a,b)
+#+END_SRC
+
+#+RESULTS:
+: 2 1
+* 面试题
+** 在一个数组中,已知有两种数出现了奇数次(a,b),其它所有数都出现了偶数次,怎么找到这两种数
+*** 分析
+- 如果全部异或,肯定为出现奇数次的两个数的异或
+- 如果第8位是1的话,那么将第8位是1或者是0分成两类
+*** 语法
+- =eor & (~eor + 1)=,源码与上补码,提取出一个数最右侧的1
+*** 代码
+#+BEGIN_SRC python :results output
+arr = [1,1,2,2,3,3,4,4,5,6]
+eor = 0
+for i in range(0, len(arr)):
+    eor ^= arr[i]
+
+# eor = a^b
+# eor != 0
+# eor必然有一个位置上是1
+rightOne = eor & (~eor + 1) # 提取出最右的1
+
+onlyOne = 0
+for i in arr:
+    if i & rightOne == 0:
+        # a 或者 b
+        onlyOne ^= i;
+print(onlyOne, eor^onlyOne)
+
+#+END_SRC
+
+#+RESULTS:
+: 6 5

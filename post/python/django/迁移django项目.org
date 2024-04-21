@@ -1,0 +1,29 @@
+---
+title: "迁移django项目"
+date: 2023-05-16T21:23:58+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 系统安装包
+** python-pip mariadb
+* pip
+** pip install django mysqlclient
+* 创建 ~/mysite1/static 文件夹
+* 配置mariadb
+#+begin_src shell
+sudo mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+sudo systemctl enable mariadb --now
+sudo mysql_secure_installation
+#+end_src
+** 进入 mariadb
+#+begin_src sql
+create database mysite1;
+
+#+end_src
+* 生成数据库
+#+BEGIN_SRC python :results output
+python manage.py makemigrations
+python manage.py migrate
+#+END_SRC

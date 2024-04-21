@@ -1,0 +1,66 @@
+---
+title: "Admin后台管理"
+date: 2023-05-15T18:02:39+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* admin配置步骤
+** 创建超级用户: python manage.py createsuperuser
+** 访问: 127.0.0.1:8000/admin
+* 注册自定义模型类
+若要自己定义的模型类也能在/admin后台管理界面中显示和管理,需要将自己的类注册到后台管理界面
+** bookstore/admin.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from .models import Book
+
+# Register your models here.
+admin.site.register(Book)
+
+#+END_SRC
+* 模型管理器类
+** 作用: 为后台管理界面添加便于操作的新功能
+** 说明: 后台管理器类须断承自django.contrib.admin里的ModelAdmin类
+** 使用方法
+1. 在 <应用app>/admin.py 里定义模型管理器类
+   #+BEGIN_SRC python :results output
+class XXXXManager(admin.ModleAdmin):
+    ......
+   #+END_SRC
+2. 绑定注册模型管理器的模型类
+   #+BEGIN_SRC python :results output
+from django.contrib import admin
+from .models import *
+
+admin.site.register(YYYY, XXXXManager) # 绑定 YYYY 模型类与管理器 XXXXManager
+
+   #+END_SRC
+** 示例
+*** bookstore/admin.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from .models import Book
+
+class BookManager(admin.ModelAdmin):
+    # 列表页显示哪些字段的列
+    list_display = ['id', 'title', 'pub', 'price']
+
+    # 控制list_display中的字段 哪些可以链接到修改页
+    list_display_links = ['title']
+
+    # 添加过滤器
+    list_filter = ['pub']
+
+    # 添加搜索框[模糊查询]
+    search_fields = ['title']
+
+    # 添加可在列表页编辑的字段
+    list_editable = ['price']
+
+# Register your models here.
+admin.site.register(Book, BookManager)
+
+
+#+END_SRC

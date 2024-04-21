@@ -1,0 +1,64 @@
+---
+title: "选择排序"
+date: 2023-02-25T14:29:24+08:00
+summary: "找极值,放入一端"
+categories: ["Python","算法"]
+tags: [""]
+---
+
+- 简单的选择排序
+  #+begin_src python :results output
+nums=[1,9,8,5]
+print(nums)
+length=len(nums)
+
+for i in range(length-1):
+    maxindex=i
+    for j in range(i+1,length):
+        if nums[j]>nums[maxindex]:
+            maxindex=j
+    nums[i],nums[maxindex]=nums[maxindex],nums[i]
+    print(nums)
+#    if i==0:break
+  #+end_src
+
+  #+RESULTS:
+  : [1, 9, 8, 5]
+  : [9, 1, 8, 5]
+  : [9, 8, 1, 5]
+  : [9, 8, 5, 1]
+- 变种: 二元选择排序
+  #+begin_src python :results output
+nums_list=[[1,9,8,5],[9,8,7,5,3,1,4,6,2],[1,1,1,1,1,1,1,1]]
+nums=nums_list[2]
+print(nums)
+length=len(nums)
+
+for i in range(length//2):
+    maxindex=i
+    minindex=-i-1
+    minorigin=minindex
+    for j in range(i+1,length-1):
+        if nums[j]>nums[maxindex]:
+            maxindex=j
+        if nums[minindex]>nums[-j-1]:
+            minindex=-j-1   #负索引
+    print(maxindex,minindex)
+
+    if nums[maxindex]==nums[minindex]:
+        break
+
+    if i!=maxindex:
+        nums[i],nums[maxindex]=nums[maxindex],nums[i]
+        if i==minindex or i==length+minindex:
+            minindex=maxindex-length
+
+    if minorigin!=minindex and nums[minindex] != nums[minorigin]:
+        nums[minorigin],nums[minindex]=nums[minindex],nums[minorigin]
+    print(nums)
+    # break
+  #+end_src
+
+  #+RESULTS:
+  : [1, 1, 1, 1, 1, 1, 1, 1]
+  : 0 -1

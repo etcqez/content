@@ -1,0 +1,172 @@
+---
+title: "Docker"
+date: 2023-03-04T22:32:53+08:00
+summary: " "
+categories: ["运维"]
+tags: [""]
+---
+
+* 网络
+- 容器之间共用ip
+   #+begin_src shell
+docker run -it --name alpine1 alpine /bin/sh
+docker run -it --network container:alpine1 --name alpine2 alpine /bin/sh
+   #+end_src
+- 自定义网络
+  #+begin_src shell
+  docker network create alpine_network
+  docker network ls
+  docker run -it --network alpine_network --name alpine1 alpine /bin/sh
+  docker run -it ---network alpine_network --name alpine2 alpine /bin/sh
+  ping alpine1
+  #+end_src
+  *可以通过容器名ping通*
+* 常用程序
+- ubuntu
+  - 创建
+    docker run --privileged -it --name='ubuntu'  registry.cn-hangzhou.aliyuncs.com/evil520/ubuntu /bin/zsh
+  - 拷贝
+    - docker cp ubuntu:a .
+  - 导入导出
+    - docker export ubuntu > ubuntu.tar
+    - cat ubuntu.tar | docker import - 镜像用户/镜像名:镜像版本号
+      - eg cat ubuntu.tar | docker import - u2:latest
+  - 创建镜像
+    - docker commit -m='vim neovim zsh emacs' -a='evil520' ubuntu evil520/ubuntu:latest
+  - 本地镜像发布到阿里云
+    1. docker login --username=evil520 registry.cn-hangzhou.aliyuncs.com
+    2. docker tag evil520/ubuntu registry.cn-hangzhou.aliyuncs.com/evil520/ubuntu:latest
+    3. docker push registry.cn-hangzhou.aliyuncs.com/evil520/ubuntu:latest
+  - 阿里云到本地
+    - docker pull registry.cn-hangzhou.aliyuncs.com/evil520/ubuntu:latest
+  - 绑定容器卷
+    - docker run -it --privileged=true -v /宿主机绝对目录:/容器内目录 镜像名
+    - 只读(read only)
+      docker run -it --privileged=true -v /宿主机绝对目录:/容器内目录:ro 镜像名
+    - 继承
+      docker run -it --privileged=true --volumes-from container 镜像名
+- mysql
+  - 安装: docker pull mysql:5.7
+  - 创建
+    docker run -d -p 3306:3306 --privileged --name mysql -e MYSQL_ROOT_PASSWORD=f -v /mysql/log:/var/log/mysql -v /mysql/data:/var/lib/mysql -v /mysql/conf:/etc/mysql/conf.d mysql:5.7
+  - 支持utf8的配置
+    #+begin_src
+[client]
+default_character_set=utf8
+[mysqld]
+collation_server = utf8_general_ci
+character_set_server = utf8
+
+    #+end_src
+  - 查看是否是utf8
+    SHOW VARIABLES LIKE 'character%';
+    - 验证
+      #+begin_src sql
+show databases;
+create database test;
+use test;
+create table test(id int,name varchar(20));
+insert into test values(1,'张三');
+select * from test;
+      #+end_src
+- portainer
+  - docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
+  - http://172.17.0.2:9000
+* 容器
+- docker start 启动容器
+- 进入运行的容器
+  - docker exec -it ubuntu /bin/bash #exit退出不会停止
+    *必须加-it和/bin/bash*
+  - docker attach ubuntu
+    *不要加-it*
+- 创建容器
+  docker run -it --name='ubuntu' ubuntu /bin/bash
+  - --name 容器名字
+  - -d 后台运行
+- 正在运行:docker ps
+  - -a 历史上运行过
+  - -l 最近运行的
+  - -q 只显示容器编号
+  - -n 1 个数
+- 重启,停止
+  - docker restart
+  - docker stop
+  - docker kill # 强制停止
+- 删除
+  - docker rm
+  - -f 强制
+  - 删除全部:docker rm -f ${docker ps -a -q}
+    docker ps -a -q | xargs docker rm
+- 日志
+  - docker logs
+- 查看内部细节
+  - docker inspect
+* 注意事项
+1. curl -XGET
+   *模拟get请求*
+* 镜像
+- docker pull
+- docker search --limit=5
+- docker images
+  - 全部: docker images -a
+  - 只显示id: -q
+  - 占用信息: docker system df
+- 删除镜像: docker rmi
+  - -f 强制
+  - 删除全部: docker rmi -f ${docker images -qa}
+* dockerfile
+- 保留字
+  1. from
+  2. maintainer
+  3. run
+  4. expose 8080
+     暴露端口
+  5. workdir
+  6. user
+  7. env
+     - 案例
+       #+begin_src df
+env MY_PATH /usr/mytest
+workdir $MY_PATH
+       #+end_src
+  8. and
+     会自动解压
+  9. copy
+  10. cmd
+  11. entrypoint
+      类似于cmd指令,但是entrypoint不会被docker run后面的命令覆盖,而且这些命令行参数会被当作参数送给entrypoint指令指定的程序
+- docker build -t centosjava8:1.5 .
+* docker-compose
+- 案例
+  #+begin_src yaml
+version: "3"
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: f
+    ports:
+      - "3306:3306"
+    networks:
+      - mysql
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: myadmin
+    environment:
+      PMA_HOST: 172.17.0.1
+      PMA_PORT: 3306
+    ports:
+      - "8080:80"
+    networks:
+      - mysql
+    depends_on:
+      - mysql
+networks:
+    mysql:
+  #+end_src
+- docker-compose  config -q
+- docker-compose  up -d
+- docker-compose start
+- docker-compose up

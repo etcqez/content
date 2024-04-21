@@ -1,0 +1,24 @@
+** grep
+#+begin_src shell
+#匹配1次停止
+# -m match
+grep -m1 root /etc/passwd
+#或
+grep -e root -e bash /etc/passwd
+#并
+grep | grep
+#包含完整单词
+# -w whole
+grep -w
+#+end_src
+** man 7 regex
+- 排除空行和#开头的行
+  #+begin_src shell
+  grep -v "^;" /etc/php/cli-php8.1/php.ini |grep -v ^$
+  grep -v "^;\|^$" /etc/php/cli-php8.1/php.ini
+  grep -v "^\(;\|$\)" /etc/php/cli-php8.1/php.ini
+  grep "^[^;]" /etc/php/cli-php8.1/php.ini
+  #+end_src
+- =grep "^\(.*\)\>.*\<\1$" /etc/passwd=
+  - =^\(.*\)>= 匹配1个单词
+  - =\<\1$= 以前1个单词结尾

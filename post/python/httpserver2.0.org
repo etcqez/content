@@ -1,0 +1,130 @@
+---
+title: "Httpserver2.0"
+date: 2023-03-27T09:45:39+08:00
+summary: "httpserver2.0版本"
+categories: ["Python"]
+tags: [""]
+---
+
+* 核心技术
+- [[./IO多路复用.org]]
+* 核心代码
+使用 =HTTPServer= 为使用者快速创建一个http服务端,根据使用者需求需要构造参数,通过 =serve_forever= 启动 HTTPServer
+#+BEGIN_SRC python :results output
+class HTTPServer:
+    def __init__(self,host='0.0.0.0',port=8888,dir=None):
+    def serve_forever(self):
+
+#+END_SRC
+* 方法分析
+* server_froever
+tcp套接字创建之后,tcp套接字监听之前.监控阻塞IO =socketfd= ,与客户端建立连接
+** handle
+接收客户端的请求.提取请求行,提取请求路径
+*** get_html
+当路径为/或者最后5个字符是.html,打开html文件,发送响应头和文件
+
+* 代码
+#+BEGIN_SRC python :results output
+from socket import *
+from select import *
+
+class HTTPServer:
+    def __init__(self,host='0.0.0.0',port=8888,dir=None):
+        self.host=host
+        self.port=port
+        self.dir=dir
+        self.address=(host,port)
+        # 多列复用列表
+        self.rlist=[]
+        self.wlist=[]
+        self.xlist=[]
+        # 实例化对象直接创建套接字
+        self.create_socket()
+        self.bind()
+
+    # 创建套接字
+    def create_socket(self):
+        self.sockfd=socket()
+        self.sockfd.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+    # 绑定地址
+    def bind(self):
+        self.sockfd.bind(self.address)
+
+    # 启动服务
+    def serve_forever(self):
+        self.sockfd.listen(3)
+        print('Listen the port %d'%self.port)
+        self.rlist.append(self.sockfd)
+        while True:
+            rs,ws,xs=select(self.rlist,self.wlist,self.xlist)
+            for r in rs:
+                if r is self.sockfd:
+                    c,addr=r.accept()
+                    print('Connect from',addr)
+                    self.rlist.append(c)
+                else:
+                    # 处理请求
+                    self.handle(r)
+
+    def handle(self,connfd):
+        # 接收HPPT请求
+        request=connfd.recv(4096)
+        if not request:
+            self.rlist.remove(connfd)
+            connfd.close()
+            return
+        # 提取请求行
+        request_line=request.splitlines()[0] # 将字节串按行切割
+        print(request_line)
+        info=request_line.decode().split(' ')[1]
+        print(connfd.getpeername(),':',info)
+
+        # 根据请求内容进行数据整理
+        # 分为两类 1.请求网页 2其他
+        if info =='/' or info[-5:]=='.html':
+            self.get_html(connfd,info)
+        else:
+            self.get_data(connfd,info)
+    # 返回网页
+    def get_html(self,connfd,info):
+        if info=='/':
+            # 请求主页
+            filename=self.dir+'/index.html'
+        else:
+            filename=self.dir+info
+        try:
+            fd=open(filename)
+        except Exception:
+            response='HTTP/1.1 404  Not Found\r\n'
+            response+='Content-Type:text/html\r\n'
+            response+='\r\n'
+            response+='<h1>Sorry...</h1>'
+        else:
+            response='HTTP/1.1 200  OK\r\n'
+            response+='Content-Type:text/html\r\n'
+            response+='\r\n'
+            response+=fd.read()
+        finally:
+            connfd.send(response.encode())
+
+    # 其他数据
+    def get_data(self,connfd,info):
+        response='HTTP/1.1 200  OK\r\n'
+        response+='Content-Type:text/html\r\n'
+        response+='\r\n'
+        response+='<h1>Waition for httpserver 3.0</h1>'
+        connfd.send(response.encode())
+
+
+if __name__=='__main__':
+    '''通过 HTTPServer类快速搭建服务,展示自己的网页'''
+    # 用户决定的参数
+    HOST='0.0.0.0'
+    PORT=8888
+    DIR='./blog/hugo/public/'
+
+    httpd=HTTPServer(HOST,PORT,DIR)
+    httpd.serve_forever()
+
+#+END_SRC

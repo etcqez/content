@@ -1,0 +1,34 @@
+---
+title: "装饰器"
+date: 2023-02-25T23:13:17+08:00
+summary: "装的一模一样"
+categories: ["Python"]
+---
+
+#+begin_src python :results output
+from functools import update_wrapper,wraps
+def logger(wrapped):
+    @wraps(wrapped)  # wrapper=wraps(logger)(wrapper)
+    def wrapper(*args,**kwargs):
+        "wrapper"
+        print('执行前可以做的事情,增强',wrapped.__name__,args,kwargs)
+        ret=wrapped(*args,**kwargs)
+        print('执行后可以做的事情,增强')
+        return ret
+    # update_wrapper(wrapped,wrapper)
+    return wrapper
+
+@logger #等价于 add=logger(add)
+def add(x,y):
+    "add"
+    return x+y
+
+print(add(4,5))
+print(add.__name__,add.__doc__)
+#+end_src
+
+#+RESULTS:
+: 执行前可以做的事情,增强 add (4, 5) {}
+: 执行后可以做的事情,增强
+: 9
+: add add

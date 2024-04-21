@@ -1,0 +1,43 @@
+---
+title: "Django安装,项目创建"
+date: 2023-04-27T17:46:08+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 验证是否安装
+** 命令行交互式执行
+#+begin_src python
+import django
+# 看是否报错
+#+end_src
+** 查看django版本
+#+BEGIN_SRC python :results output
+import django
+print(django.VERSION)
+#+END_SRC
+
+#+RESULTS:
+: (4, 2, 0, 'final', 0)
+* 安装django
+pip install django
+** 安装指定版本
+pip install django==版本
+** 离线安装
+1. 下载安装包
+2. 安装离线包
+   1. tar -xvf Django.tar.gz
+   2. cd Django
+   3. python setup.py install
+** 用wheel离线安装
+1. 下载安装包
+   pip download django
+2. 安装离线包
+   pip insall Django.whl
+* 创建项目
+- django-admin startproject 项目名称
+- 如:
+  - django-admin startproject mysite1
+** 运行
+python manage.py runserver

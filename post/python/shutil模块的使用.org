@@ -1,0 +1,55 @@
+---
+title: "Shutil模块的使用"
+date: 2023-02-27T14:02:36+08:00
+summary: "复制删除文件夹"
+categories: ["Python"]
+tags: [""]
+---
+
+#+begin_src python :results output
+from shutil import copyfile,copyfileobj,copy,copy2,copytree
+import shutil
+from pathlib import Path
+
+dst='/home/f/tdir'
+src='/home/f/blog/hugo/content/post/Python'
+
+#复制文件夹
+# copytree(src,dst)
+#删除复制的文件夹
+shutil.rmtree(dst,True)
+
+def fn(x,names):
+    print(x,names)
+    s=set()
+    for name in names:
+        if name.endswith('.org'):
+            print(name)
+            s.add(name)
+    return s
+    # return {name for name in names if name.endswith('.org')}
+    # return set(filter(lambda name: name.endswith('.py'), names))
+    # filter 是迭代器只能使用一次
+
+copytree(src,dst,ignore=fn)
+#遍历文件夹,Path是列表,*是解构
+print(*Path(dst).rglob('*'),sep='\n')
+#+end_src
+
+#+RESULTS:
+#+begin_example
+/home/f/blog/hugo/content/post/Python ['环境安装.org', '查看帮助.org', '九九乘法表.org', '练习.org', '生成器函数.org', '冒泡排序.org', '递归函数.org', '选择排序.org', '装饰器.org', '插入排序.org', '递归.org', 't.py', 'shutil模块的使用.org']
+环境安装.org
+查看帮助.org
+九九乘法表.org
+练习.org
+生成器函数.org
+冒泡排序.org
+递归函数.org
+选择排序.org
+装饰器.org
+插入排序.org
+递归.org
+shutil模块的使用.org
+/home/f/tdir/t.py
+#+end_example

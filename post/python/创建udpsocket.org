@@ -1,0 +1,44 @@
+---
+title: "创建udpsocket"
+date: 2023-03-18T11:37:37+08:00
+summary: ""
+categories: ["Python"]
+tags: ["udp"]
+---
+
+* 服务端
+#+BEGIN_SRC python :results output
+from socket import *
+
+ADDR=('127.0.0.1',8888)
+
+sockfd=socket(AF_INET,SOCK_DGRAM)
+sockfd.bind(ADDR)
+
+while True:
+    data,addr=sockfd.recvfrom(1024)
+    print('收到消息:',data.decode())
+    sockfd.sendto(b'Thanks',addr)
+
+sockfd.close()
+
+#+END_SRC
+* 客户端
+#+BEGIN_SRC python :results output
+from socket import *
+
+ADDR=('127.0.0.1',8888)
+
+sockfd = socket(AF_INET,SOCK_DGRAM)
+
+while True:
+    data=input('Msg>>')
+    if not data:
+        break
+    sockfd.sendto(data.encode(),ADDR)
+    msg,addr=sockfd.recvfrom(1024)
+    print('From server:',msg.decode())
+
+sockfd.close()
+
+#+END_SRC

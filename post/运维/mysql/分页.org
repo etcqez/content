@@ -1,0 +1,16 @@
+---
+title: "分页"
+date: 2023-05-22T14:25:33+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+* 分页
+- limit 偏移量,条数
+  - eg limit 0,20 (每页显示20条数据,此时显示第1页)
+    *偏移量为零可省略*
+  - eg limit 20,20 (每页显示20条数据,此时显示第2页)
+  - eg limit 40,20 (每页显示20条数据,此时显示第3页)
+    公式: limit (pageNo-1)*pageSize,pageSize;
+- mysql8.0新特性: limit 条数 offset 偏移量

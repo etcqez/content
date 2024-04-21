@@ -1,0 +1,18 @@
+---
+title: "Django的设计模式"
+date: 2023-05-09T19:09:57+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 传统的MVC
+** MVC代表Model-View-Controller (模型-视图-控制器) 模式
+*** M: 主要用于对数据库层的封装
+*** V: 用于向用户展示结果 (WHAT+HOW)
+*** C: 用于处理请求,*获取数据,返回结果*(重要)
+* Django的MTV模式
+** MTV代表Model-Template-View (模型-模板-视图) 模式
+*** M: 负责于数据库交互
+*** T: 负责呈现内容到浏览器(HOW)
+*** V: 是核心,负责接收请求,*获取数据,返回结果*(WHAT)

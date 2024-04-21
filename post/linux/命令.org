@@ -1,0 +1,83 @@
+---
+title: "命令"
+date: 2023-02-14T21:37:06+08:00
+categories: ["Linux"]
+---
+
+* 命令
+** install
+*install功能相当于cp,chmod,chown,chgrp等相关工具的集合*
+#+begin_src shell
+#复制文件
+# -m 权限 -o 所有者 -g 所属组
+install -m 640 -o f -g f test.sh Desktop/
+# 创建文件夹
+install -m 700 -o f -g f -d testdir
+#+end_src
+*默认是755,适合复制可执行程序*
+** expect
+  - 复制到远程
+    #+begin_src shell
+    #!/usr/bin/expect
+    spawn scp /etc/fstab 10.0.0.7:/data
+    expect {
+        "yes/no" { send "yes\n";exp_continue }
+        "password" { send "xxxxxx\n" }
+    }
+    expect eof
+    #+end_src
+  - 远程登录主机
+    #+begin_src shell
+    #!/usr/bin/expect
+    spawn ssh 10.0.0.7
+    expect {
+        "yes/no" { send "yes\n";exp_continue }
+        "password" { send "xxxxxx\n" }
+    }
+    interact
+    #+end_src
+  - *expect使用变量*
+    #+begin_src shell
+    #!/usr/bin/expect
+    set ip 10.0.0.7
+    set user root
+    set password xxxxxx
+    set timeout 10
+    spawn ssh $user@$ip
+    expect {
+        "yes/no" { send "yes\n";exp_continue }
+        "password" { send "$password" }
+    }
+    interact
+    #+end_src
+  - expect位置参数
+    #+begin_src shell
+    #!/usr/bin/expect
+    set ip [lindex $argv 0]
+    set user [lindex $argv 1]
+    set password [lindex $argv 2]
+    set timeout 10
+    spawn ssh $user@$ip
+    expect {
+        "yes/no" { send "yes\n";exp_continue }
+        "password" { send "$password" }
+    }
+    interact
+    #+end_src
+  - expect执行多个命令: 远程登录并创建账号
+    #+begin_src shell
+    #!/usr/bin/expect
+    set ip [lindex $argv 0]
+    set user [lindex $argv 1]
+    set password [lindex $argv 2]
+    set timeout 10
+    spawn ssh $user@$ip
+    expect {
+        "yes/no" { send "yes\n";exp_continue }
+        "password" { send "$password" }
+    }
+    expect "]#" { send "useradd haha\n" }
+    expect "]#" { send "echo xxxxxx |passwd --stdin haha\n" }
+    send "exit\n"
+    expect eof
+    #+end_src

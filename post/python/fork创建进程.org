@@ -1,0 +1,65 @@
+---
+title: "Fork创建进程"
+date: 2023-03-18T12:56:25+08:00
+summary: "fork,僵尸进程"
+categories: ["Python"]
+tags: ["多进程"]
+---
+
+* fork
+#+BEGIN_SRC python :results output
+import os
+
+pid=os.fork()
+
+if pid<0:
+    print("Create process failed")
+elif pid==0:
+    print('The now process')
+else:
+    print('The old process')
+
+print('Fork test over')
+
+#+END_SRC
+* 解决僵尸进程
+** os.wait()
+#+BEGIN_SRC python :results output
+import os,sys
+
+pid=os.fork()
+
+if pid<0:
+    print("Error")
+elif pid==0:
+    print('Child PID:',os.getpid())
+    sys.exit('子进程退出')
+else:
+    '''
+    os.wait() # 处理僵尸进程
+    '''
+    pid,status=os.wait()
+    print("pid:",pid)
+    print('status:',status)
+    while True: # 父进程不退出
+        pass
+
+#+END_SRC
+**  创建二级子进程
+#+BEGIN_SRC python :results output
+pid=os.fork()
+if pid==0:  # 一级子进程
+    p=os.fork()
+    if p==0:    # 二级子进程
+        f1()
+    else: -级子进程
+        os._exit(0)
+else: # 父进程
+    os.wait()   # 等一级子进程退出
+    f2()
+#+END_SRC
+** 通过信号
+#+BEGIN_SRC python :results output
+import sigal
+signal.sighal(sigal.SIGCHLD,signal.SIG_IGN)
+#+END_SRC

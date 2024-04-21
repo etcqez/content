@@ -1,0 +1,40 @@
+---
+title: "Python Debugger Pdb"
+date: 2023-05-20T16:45:33+08:00
+summary: " "
+categories: [""]
+tags: [""]
+---
+
+* 增加断点 breakpoint()
+* python -m pdb t.py
+* pdb命令
+** p 变量
+打印变量
+** w(where)
+查看调用栈
+** l(list)
+查看当前行前后的11行代码,
+*** 再输入l会往下再翻11行
+*** l. 回到当前行数
+** ll(longlist)
+显示当前函数全部代码
+** u d
+调整当前帧
+** n(next)
+运行一行程序
+** s(step)
+进入函数调用
+** retval
+获取返回值
+** unt(until) 数字
+运行到某行
+** r(return)
+运行到返回
+** c(continue)
+继续执行
+** b(break) 行数
+增加断点
+*** b 函数地址
+在调用函数时下断点
+** clear 断点编号

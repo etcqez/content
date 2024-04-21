@@ -1,0 +1,41 @@
+---
+title: "二进制安装"
+date: 2023-05-22T14:18:21+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+1. useradd -r -d /data/mysqldb -s /sbin/nologin mysql
+   *系统账号默认不会创建家目录*
+2. tar xvf mariadb-num-linux-x86_64,tar.gz -C /usr/local/
+3. cd /usr/local/
+4. ln -s mariadb-num-linux-x86_64 mysql
+5. chow -R root: mysql/
+6. 将/usr/local/mysql/bin加入环境变量
+7. mkdir /data/mysqldb
+8. chown mysql.mysql /data/mysqldb
+9. chmod 770 /data/mysqldb
+10. cp support-files/my-huge.cnf /etc/my.cnf
+    选择my-huge.cnf作为主要配置
+11. scripts/mysql_install_db --datadir=/data/mysqldb --user=mysql
+    生成数据库文件
+    - 可能需要安装的包
+      1. perl-Data-Dumper
+      2. libaio
+12. 修改配置文件,在配置文件中指定数据库
+    #+begin_src cnf
+[mydqld]
+datadir = /data/mysqldb
+socket = /usr/local/mysql/mysql.sock
+[client]
+socket = /usr/local/mysql/mysql.sock
+    #+end_src
+13. cp support-files/mysql.server /etc/init.d/mysqld 拷贝服务文件
+14. chkconfig --add mysqld
+    开机启动
+15. service mysqld start
+    由于sock文件在/usr/local/mysql/mysql.sock没有写权限,启动失败
+16. setfacl -R -m u:mysql:rwx /usr/local/mysql
+17. mysql_secure_installation
+    取消sock路径的修改

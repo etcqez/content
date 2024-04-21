@@ -1,0 +1,38 @@
+---
+title: "Awk"
+date: 2023-03-02T14:17:30+08:00
+summary: " "
+categories: ["Linux"]
+tags: [""]
+---
+
+* awk
+1. 变量
+   1. 分隔符: =FS= (field separator)
+   2. 记录分隔符: =RS= (record separator)
+   3. 字段数: =NF= (number of field)
+   4. 行号: =NR= (number of record)
+   5. =FNR=: 各文件分别计数
+   6. =FILENAME=: 当前文件名
+   7. =ARGC=: 命令行参数个数
+      #+begin_src shell
+      awk '{print ARGC}' /etc/issue /etc/os-release
+      #+end_src
+2. 取出访问量最多的前几个ip地址
+   #+begin_src shell
+   awk '{print $1}' nginx.access.log-20200428 |sort |uniq -c |sort -nr |head -3
+   #+end_src
+3. 取出分区利用率
+   #+begin_src shell
+   \df |grep '^/dev' |awk -F'[[:space:]​]+|%' '{print $1,$5}'
+   \df |awk -F'[[:space:]​]+|%' '/^\/dev/{print $1,$5}'
+   #+end_src
+4. 取出ip地址
+   #+begin_src shell
+   ifconfig wlan0 |awk '/netmask/{print $2}'
+   ifconfig wlan0 |sed -rn '2s/^[^0-9]+([0-9.]+) .*$/\1/p'
+   #+end_src
+5. 连接数最多的3个ip
+   #+begin_src shell
+   ss -nt |awk -F" +|:" '/^ESTAB/{print $6}' |sort |uniq -c |sort -nr |head -n3
+   #+end_src

@@ -1,0 +1,145 @@
+---
+title: "进程"
+date: 2023-02-19T15:04:21+08:00
+categories: ["Linux"]
+---
+
+* 进程
+- 查看进程编号: =pidof firefox=
+  - =prtstat `pidof X`= 详细
+  - =prtstat 1=
+- 判断多线程: =pstree -p= 是否含有花括号
+  - =cat /proc/`pidof xfce4-panel`/status=
+- 查看进程状态码: =man ps= /CODES
+- 查看信号
+  #+begin_src shell
+  man 7 signal
+  #zsh无效
+  trap -l
+  #+end_src
+- 创建管道文件: =mkfifo /data/test.fifo=
+** ps
+- =auf= 显示进程关系
+- =k= 排序
+  #+begin_src shell
+# -%cpu表示降序
+  ps ao pid,%cpu,%mem,cmd k -%cpu
+  ps au k -%cpu
+  ps au k %cpu
+  #+end_src
+** 优先级
+- 设置
+  #+begin_src shell
+  #zsh无效
+  s nice -n -10 ping baidu.com
+  ➜  ~ ps ao pid,cmd,nice |grep ping
+   8959 sudo nice -n -10 ping baidu   0
+   8960 ping baidu.com              -10
+  #+end_src
+- 修改
+  #+begin_src shell
+  ➜  ~ s renice -n -20 30221
+  30221 (process ID) old priority 0, new priority -20
+  ➜  ~ ps ao pid,cmd,nice |grep firefox
+  30221 /usr/lib64/firefox/firefox  -20
+  #+end_src
+- cpu的绑定: =taskset --help=
+** pgrep
+#+begin_src shell
+pgrep -au f
+#查看子进程
+pgrep -aP PID
+pgrep -at pts/1
+#+end_src
+** mpstat,iostat dstat vmstat
+#+begin_src shell
+#安装:
+vj sysstat dstat
+#每2秒执行1次,6次后退出
+mpstat 2 6
+vmstat 1
+#+end_src
+** top,iotop,iftop
+- 排序: =M(mem) P(cpu) T(累积占据CPU时长)=
+- =1:显示每个cpu s:delay k:kill=
+** pmap
+查看程序占用的内存空间
+#+begin_src shell
+➜  ~ s pmap 1
+1:   init [3]
+000055e6aeb70000     12K r---- init
+000055e6aeb73000     28K r-x-- init
+000055e6aeb7a000      8K r---- init
+000055e6aeb7c000      4K r---- init
+000055e6aeb7d000      4K rw--- init
+000055e6afb2b000    132K rw---   [ anon ]
+00007f150ffff000     12K rw---   [ anon ]
+00007f1510002000    136K r---- libc.so.6
+00007f1510024000   1328K r-x-- libc.so.6
+00007f1510170000    332K r---- libc.so.6
+00007f15101c3000     16K r---- libc.so.6
+00007f15101c7000      8K rw--- libc.so.6
+00007f15101c9000     32K rw---   [ anon ]
+00007f15101e2000      8K rw---   [ anon ]
+00007f15101e4000      4K r---- ld-linux-x86-64.so.2
+00007f15101e5000    148K r-x-- ld-linux-x86-64.so.2
+00007f151020a000     40K r---- ld-linux-x86-64.so.2
+00007f1510215000      8K r---- ld-linux-x86-64.so.2
+00007f1510217000      8K rw--- ld-linux-x86-64.so.2
+00007ffd4573a000    132K rw---   [ stack ]
+00007ffd45779000     16K r----   [ anon ]
+00007ffd4577d000      8K r-x--   [ anon ]
+ffffffffff600000      4K r-x--   [ anon ]
+ total             2428K
+#+end_src
+** strace ltrace
+- 查看程序运行过程中的系统调用
+  #+begin_src shell
+  #安装
+  vp strace ltrace
+  strace ls
+  #显示库(语言库)的调用
+  ltrace ls
+  #+end_src
+** nload
+#+begin_src shell
+nload wlan1 wlan0
+#+end_src
+** glances
+#+begin_src shell
+glances -s
+glances -c IP
+#+end_src
+** lsof(list open file)
+#+begin_src shell
+lsof -i :PORT
+#tty gentoo无效
+lsof /dev/pts/2
+lsof -p PID
+#+end_src
+** 并行运行
+1. 方法1
+   #+begin_src shell
+   cat all.sh
+   fi.sh&
+   f2.sh&
+   f3.sh&
+   #+end_src
+2. 方法2
+   #+begin_src shell
+   (f1.sh&);(f2.sh&);(f3.sh&);
+   #+end_src
+3. 方法3
+   #+begin_src shell
+   f1.sh& f2.sh& f3.sh&
+   #+end_src
+** 计划任务
+- at
+  #+begin_src shell
+  at 14:45
+  at -l #同atq
+  at -c 3
+  at -d 3 #同atrm
+  #+end_src
+  - 白名单: =/etc/at.allow=
+  - 黑名单: =/etc/at.deny=

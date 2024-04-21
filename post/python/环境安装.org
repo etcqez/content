@@ -1,0 +1,70 @@
+* 环境安装
+** virtualenv
+#+begin_src shell
+#切换版本
+alternatives --config python3
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+pip install virtualenv --user
+echo $PATH
+mkdir ~/venvs
+mkdir -p ~/projects/cmdb
+cd venvs
+virtualenv vcmdb
+#进入
+. venvs/vcmdb/bin/activate
+#退出
+deactivate
+#+end_src
+*python装在~/venvs/vcmdb*
+** pyenv
+- .bash_profile
+    #+begin_src shell
+    ➜  ~ pyenv init
+    # Load pyenv automatically by appending
+    # the following to
+    #~/.zprofile (for login shells)
+    #and ~/.zshrc (for interactive shells) :
+
+    export PYENV_ROOT="$HOME/.pyenv"
+    command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$(pyenv init -)"
+
+    # Restart your shell for the changes to take effect.
+    #+end_src
+- 安装cpython
+  #+begin_src shell
+  pyenv install -l
+  pyenv install -v 3.9.9
+  #+end_src
+  - 安装失败
+    #+begin_src shell
+    mkdir .pyenv/cache
+    #移动Python-3.9.9.tar.xz到cache文件夹
+    pyenv install 3.9.9 -vvv
+    #+end_src
+- 选择使用的python版本
+  #+begin_src shell
+  cd project/cmdb
+  pyenv local 3.9.9
+  #+end_src
+- 使用内置virtualenv
+  #+begin_src shell
+  pyenv virtualenv 3.9.9 v399
+  pyenv local v399
+  #+end_src
+  *python装在.pyenv/versions/3.9.9/envs/v399/*
+*** 常用命令
+#+begin_src shell
+#更新仓库
+pyenv update
+#查看所有版本
+pyenv versions
+#查看当前版本
+pyenv version
+#+end_src
+** jupyter
+  - L 行号
+  - a b 插入
+  - tab 补全
+  - _ 上次返回的结果
+  - __ 上上次返回的结果

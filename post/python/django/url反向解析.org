@@ -1,0 +1,115 @@
+---
+title: "Url反向解析"
+date: 2023-05-13T17:04:48+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 代码中url书写规范
+** 带/的相对地址: 协议+ip+端口+地址
+** 不带/的相对地址: 最后一个'/'之前的内容+地址
+** test_url.html
+#+begin_src html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/style.css" rel="stylesheet">
+  </head>
+  <body>
+  <a href="http//127.0.0.1:8000/test_url_result">绝对地址</a>
+  <a href="/test_url_result">带'/'的相对地址</a>
+  <a href="test_url_result">不带'/'的相对地址</a>
+  </body>
+</html>
+
+#+end_src
+** views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+from django.shortcuts import render
+
+def test_url(request):
+    return render(request, 'test_url.html')
+
+def test_url_result(request):
+    return HttpResponse('---test url res is ok')
+
+#+END_SRC
+** urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    path('test/url', views.test_url),
+    path('test_url_result', views.test_url_result)
+]
+
+#+END_SRC
+
+
+* url反向解析
+** 用法
+用在跳转当中,a标签,视图函数中跳转到其他地址
+** 定义
+- url反向透析是指在视图或模板中, =用path定义的名称= 来动态查找或计算出相应的路由
+** 案例
+*** 模板中 - 通过url标签实现地址的反向解析
+**** test_url.html
+#+begin_src html
+<!-- http://127.0.0.1:8000/test_url_result/100 -->
+  <a href="{% url 'tr' '100' %}">url反向解析版本</a>
+
+#+end_src
+**** urls.py
+#+BEGIN_SRC python :results output
+urlpatterns = [
+    path('test/url', views.test_url),
+    path('test_url_result/<int:age>', views.test_url_result, name='tr')
+]
+
+#+END_SRC
+
+**** views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+from django.shortcuts import render
+
+def test_url(request):
+    return render(request, 'test_url.html')
+
+def test_url_result(request,age):
+    return HttpResponse('---test url res is ok')
+
+#+END_SRC
+*** 视图函数中 - 可调用django中的reverse方法进行反向解析
+**** views.py
+#+BEGIN_SRC python :results output
+def test_url_result(request,age):
+    # 302跳转
+    from django.urls import reverse
+    url = reverse('base_index')
+    return HttpResponseRedirect(url)
+
+#+END_SRC
+**** urls.py
+#+BEGIN_SRC python :results output
+urlpatterns = [
+    path('test/url', views.test_url, name='base_index'),
+    path('test_url_result/<int:age>', views.test_url_result, name='tr')
+]
+
+#+END_SRC
+
+**** test_url.html
+#+begin_src html
+  <a href="{% url 'tr' '100' %}">url反向解析版本</a>
+
+#+end_src

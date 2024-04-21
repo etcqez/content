@@ -1,0 +1,454 @@
+---
+title: "Ansible"
+date: 2023-03-02T15:28:43+08:00
+summary: " "
+categories: ["运维"]
+tags: [""]
+---
+
+* 排错
+1. ping不通
+   #+begin_src shell
+➜  ~ ansible all -k -m ping
+SSH password:  [ERROR]: User interrupted execution
+➜  ~ ansible all -k -m ping -u root
+SSH password:
+192.168.122.45 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+➜  ~ ansible all -m ping -u root
+192.168.122.45 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+   #+end_src
+* 配置文件
+** gentoo wiki
+- *注意: 使用非root用户时,ansible使用~/.ansible.cfg作为配置文件,使用/etc/ansible/hosts作为主机清单*
+- 生成/etc/ansible/ansible.cfg
+  #+begin_src shell
+  sudo -s mkdir /etc/ansible/
+  ansible-config init --disabled | sudo tee /etc/ansible/ansible.cfg
+  #或
+  sudo sh -c "ansible-config init --disabled > /etc/ansible/ansible.cfg"
+  #一步
+  sudo sh -c "mkdir /etc/ansible/; ansible-config init --disabled > /etc/ansible/ansible.cfg"
+  #查看当前使用配置
+  ansible-config view
+  #为f复制一份
+  cps /etc/ansible/ansible.cfg .ansible.cfg
+  #+end_src
+- hosts
+  #+begin_src shell
+➜  ~ cat /etc/ansible/hosts
+[opel]
+192.168.122.45
+#192.168.3.11
+  #+end_src
+- 日志
+  #+begin_src shell
+  sudo sh -c "touch /var/log/ansible.log; chown f:f /var/log/ansible.log"
+  #+end_src
+** /etc/ansible/ansible.cfg
+- 开启日志: =log_path=/var/log/ansible.log=
+- 关闭检查key: =host_key_checking = False=
+** 主机清单
+*** /etc/ansible/hosts
+- 分组
+  #+begin_src conf
+[opel]
+192.168.122.45
+  #+end_src
+*** 列出目前所有管理的主机列表
+#+begin_src shell
+ansible all --list
+# 查看websrvs分组的主机列表
+ansible websrvs --list
+#+end_src
+** 查看帮助
+#+begin_src shell
+ansible-doc ping
+ansible-doc -s ping
+#+end_src
+* 批量推送公钥
+#+begin_src shell
+IPLIST="
+        10.0.0.8
+        10.0.0.7"
+
+rpm -q sshpass &> /dev/null || yum -y install sshpass
+[ -f /root/.ssh/id_rsa ] || ssh-keygen -f /root/.ssh/id_rsa -P ""
+export SSHPASS=centos #远程主机root密码
+for ID in $IPLIST;do
+          sshpass -e ssh-copy-id -o StrictHostKeyChecking=no $IP
+done
+#+end_src
+* 调用模块
+#+begin_src shell
+# 测试远程主机是否能进行shh连接
+ansible all -m ping
+# 以密码连接
+ansible all -k -m ping
+#+end_src
+* ansible的Host-pattern
+用于匹配被控制的主机列表
+- All:表示Inventory中的所有主机列表
+  ansible all -m ping
+- *:通配符
+  #+begin_src shell
+ansible "*" -m ping
+ansible "192.168.1.*" -m ping
+ansible "*srvs" -m ping
+  #+end_src
+- *或关系*
+  #+begin_src shell
+  ansible "websrvs:appsrvs" -m ping
+  #+end_src
+- *与关系*
+  #+begin_src shell
+  ansible "websrvs:&appsrvs" -m ping
+  #+end_src
+- *非关系*
+  #+begin_src shell
+  ansible 'websrvs:!appsrvs' -m ping
+  #+end_src
+  *必须用单引号,!表历史*
+  - *应用场景*
+    - 先将其他机器关机,再关自己
+      #+begin_src shell
+      ansible 'all:!10.0.0.18' -a reboot;reboot
+      #+end_src
+* 常用工具
+- 加密
+  #+begin_src shell
+  ansible-vault encrypt hello.yml
+  ansible-vault decrypt hello.yml
+  ansible-vault view hello.yml
+  ansible-vault edit hello.yml
+  ansible-vault rekey hello.yml
+  ansible-vault create new.yml
+  #+end_src
+- =ansible-console= 交互命令
+  #+begin_src shell
+  list
+  # 切换组
+  cd 分组名
+  ping
+  # 设置并发数
+  forks 10
+  #+end_src
+* 常用模块
+** Command
+- 此命令不支持 =$VARNAME < > | ; &= 等,用 =shell= 模块实现
+  #+begin_src shell
+  ansible-doc -s command
+  ansible all -m command -a 'hostname'
+  # 同
+  ansible all -a 'hostname'
+  #+end_src
+- 查看默认模块
+  #+begin_src shell
+  cat /etc/ansible.cfg
+  module_name=command
+  #+end_src
+*** 参数
+- 语法
+  - ansible all -a "chdir=/data touch b.txt"
+- chdir 进入目录
+- creates
+  如果文件存在就 *不执行*
+- removes
+  如果文件存在就 *执行*
+** Shell
+#+begin_src shell
+ansible-doc -s shell
+# 修改默认模块
+cat /etc/ansible.cfg
+module_name=shell
+# 查看详细执行过程
+# -a后面跟单引
+ansible all -vvv -a 'ls'
+#+end_src
+** Script
+在远程主机执行shell脚本
+#+begin_src shell
+ansible all -m scipt -a '/root/test.sh'
+#+end_src
+** Copy
+ansible-doc -s copy
+*** 参数
+- src
+  - 如果文件夹以 =/= 结束,仅仅复制文件夹里面的 =内容=
+  - 如果 =不= 以 =/= 结束,复制目录 =本身和内容=,和 =rsync= 类似
+- 语法
+  #+begin_src shell
+  ansible websrvs -m copy -a 'src=/root/test1.sh dest=/tmp/test2.sh owner=evil520 mode=600 backup=yes'
+  # backup=yes 覆盖时备份
+
+  # 生成文件
+  ansible websrvs -m copy -a 'content="line1\nline2" dest=/tmp/test.txt'
+  #+end_src
+** Fetch
+从远程主机抓取文件到ansible的机器上,目前 *不支持目录*
+#+begin_src shell
+ansible websrvs -m fetch -a 'src=/etc/os-release dest=/data/'
+# 会建立名为各远程主机ip的文件夹
+#+end_src
+** File
+- 创建文件 state=touch
+  #+begin_src shell
+  ansible websrvs -m file -a 'path=/data/file.log state=touch mode=000 owner=evil520 group=bin'
+  #+end_src
+- 创建文件夹 state=dirtory
+  #+begin_src shell
+  ansible websrvs -m file -a 'path=/data/dir state=dirtory'
+  # state=absent 删除
+  ansible websrvs -m file -a 'path=/data/file.log state=absent'
+  #+end_src
+- 创建软链接 state=link
+  #+begin_src shell
+  ansible websrvs -m file -a 'src=/data/file.log state=link dest=/tmp/file.log.link'
+  #+end_src
+** Unarchive
+解压缩
+*** 参数
+- copy 默认为yes,当copy=yes,拷贝的文件是从ansible主机复制到远程主机上,如果设置为copy=no,会在远程主机上寻找src源文件
+- remote_src 各copy功能一样且互斥
+- 范例
+  #+begin_src shell
+  ansible all -m unarchive -a 'src=/data/foo.tgz dest=/var/lib/foo owner=f group=bin'
+  ansible all -m unarchive -a 'src=/tmp/foo.zip dest=/data copy=no mode=0777'
+  ansible all -m unarchive -a 'src=http​s://example.example.zip dest=/data copy=no'
+  #+end_src
+** Hostname
+#+begin_src shell
+ansible node1 -m hostname -a "name=websrvs"
+#+end_src
+** Cron
+#+begin_src shell
+# 创建
+ansible websrvs -m cron -a 'hour=2 minute=30 weekday=1-5 name="back mysql" job=/root/mysql_backup.sh'
+# 禁用
+ansible websrvs -m cron -a 'hour=2 minute=30 weekday=1-5 name="back mysql" job=/root/mysql_backup.sh disabled=yes'
+# 启用
+ansible websrvs -m cron -a 'hour=2 minute=30 weekday=1-5 name="back mysql" job=/root/mysql_backup.sh disabled=no'
+# 删除
+ansible websrvs -m cron -a 'state=absent name="back mysql"'
+#+end_src
+** Yum
+#+begin_src shell
+ansible websrvs -m yum -a 'name=iotop,cowsay'
+#state=absent 卸载
+#+end_src
+** Service
+#+begin_src shell
+ansible websrvs -m service -a 'name=vsftpd state=started enabled=yes'
+state=stopped 停止服务
+state=restarted 重启服务
+#+end_src
+** User
+#+begin_src shell
+# 创建
+ansible all -m user -a 'name=user1 commit="test user" uid=2048 home=/app/user1 group=root'
+# 创建系统用户
+ansible all -m user -a 'name=nginx commit=nginx uid=88 group=nginx groups="root,daemon" shell=/sbin/nologin system=yes create_home=no'
+# 删除
+ansible all -m user -a 'name=user1 state=absent remove=yes'
+#+end_src
+** Group
+#+begin_src shell
+ansible websrvs -m group -a 'name=nginx gid=88 system=yes'
+#+end_src
+** Lineinfile 修改文件某行
+#+begin_src shell
+ansible all -m lineinfile -a 'path=/etc/selinux/config regexp="^SELINUX=" line="SELINUX=disabled"'
+# state=absent 删除某行
+#+end_src
+** Replace
+#+begin_src shell
+ansible all -m replace -a 'path=/etc/fstab regexp="^(UUID.*)" replace="#\1"'
+#+end_src
+** Setup
+=ansible websrvs -m setup -a 'filter=ansible_distribution'=
+- filter
+  - =ansible_nodename= 主机名
+  - =ansible_os_family= 操作系统家族
+  - =ansible_distribution= 操作系统
+  - =ansible_memtotal_mb= 内存大小
+  - =ansible_all_ipv4_address= ip
+  - =ansible_default_ipv4= 默认ip
+* ansible执行原理
+将python脚本复制到远程执行,如果远程缺少信赖包将导致执行失败
+* playbook
+=ansible-playbook -C hello.yml=
+检查语法
+** 第一个yaml文件: hello.yml
+#+begin_src yaml
+---
+- hosts: all
+  remote_user: root
+
+  tasks:
+    - name: 是否正常
+      ping:
+    - name: 查看OS版本
+      setup: filter=ansible_distribution_major_version
+    - name: 查看时间
+      shell: date
+#+end_src
+=hosts: websrvs:appsrvs= *websrvs和appsrvs列表*
+** 选项
+- =--list-hosts=
+- =--list-tasks=
+  #+begin_src shell
+➜  ~ ansible-playbook --list-hosts hello.yml
+
+playbook: hello.yml
+
+  play #1 (all): all	TAGS: []
+    pattern: ['all']
+    hosts (1):
+      192.168.122.45
+
+➜  ~ ansible-playbook --list-tasks hello.yml
+
+playbook: hello.yml
+
+  play #1 (all): all	TAGS: []
+    tasks:
+      是否正常	TAGS: []
+      查看OS版本	TAGS: []
+      查看时间	TAGS: []
+  #+end_src
+- =--limit=
+  只针对主机列表中的特定主机执行
+** handle,notify
+当文件改变时执行
+#+begin_src yaml
+tasks:
+  - name: Install httpd
+    yum: name=httpd state=present
+  - name: Install configure file
+    copy: src=files/httpd.conf dest=/etc/httpd/conf/
+    notify: restart service
+  - name: modify config
+    lineinfile: path=/etc/httpd/conf/httpd.conf regexp='^Listen' line='Listen 6666'
+    notify: restart service
+  - name: mkdir website dir
+    file: path=/data/html state=directory
+  - name: web html
+    copy: files/index.html dest=/data/html/
+  - name: start service
+    service: name=httpd state=started enable=yes
+
+handlers:
+  - name: restart service
+    service: name=httpd state=restarted
+#+end_src
+** tags
+选择同一类标签执行
+#+begin_src yaml
+tasks:
+  - name: Install httpd
+    yum: name=httpd state=present
+  - name: Install configure file
+    copy: src=files/httpd.conf dest=/etc/httpd/conf/
+    tags: conf
+    notify: restart service
+  - name: modify config
+    lineinfile: path=/etc/httpd/conf/httpd.conf regexp='^Listen' line='Listen 6666'
+    tags: conf
+    notify: restart service
+  - name: mkdir website dir
+    file: path=/data/html state=directory
+  - name: web html
+    copy: files/index.html dest=/data/html/
+    tags: html
+  - name: start service
+    service: name=httpd state=started enable=yes
+
+handlers:
+  - name: restart service
+    service: name=httpd state=restarted
+#+end_src
+#+begin_src shell
+ansible-playbook --list-tags install_httpd.yml
+ansible-playbook -t html install_httpd.yml
+#+end_src
+* 变量
+1. set模块变量
+   #+begin_src yaml
+---
+- hosts: websrvs
+  remote_user: root
+  gather_faces: yes
+
+  tasks:
+    - name: create log file
+      file: name=/data/{{ ansible_nodename }}.log state=touch owner=wang mode=600
+   #+end_src
+    =ansible-playbook var1.yml=
+2. 在命令行定义变量
+   #+begin_src yaml
+---
+- hosts: all
+  remote_user: root
+  tasks:
+    - name: install package
+      yum: name={{ pkname  }} state=present
+   #+end_src
+   #+begin_src shell
+# 临时替换变量
+alsible-playbook -e pkname=httpd var.yml
+   #+end_src
+3. 在playbook文件中定义变量
+   #+begin_src yaml
+---
+- hosts: all
+  remote_user: root
+  vars:
+    - username: user1
+    - groupname: group1
+  tasks:
+    - name: create group
+      group: name={{ groupname }} state=present
+    - name: create user
+      user: name={{ username }} group={{ groupname }} state=present
+   #+end_src
+   #+begin_src shell
+alsible-playbook -e "username=user2 groupname=user2" var.yml
+   #+end_src
+   - *-e的优先级更高*
+4. 主机变量和分组变量
+   #+begin_src hosts
+[opel]
+192.168.122.45 hname=www1
+192.168.3.11 hname=www2
+[opel:vars]
+domain=evil520.org
+   #+end_src
+* 模板
+- template文件必须存放于templates目录下,且命名为.j2结尾
+- 范例: 利用template同步nginx配置文件
+  #+begin_src shell
+mkdir templates
+cat templates/nginx.conf.j2
+worker_processes {{ ansible_processor_vcpus }};
+
+
+#temnginx2.yml
+---
+- hosts: websrvs
+  remote_user: root
+
+  tasks:
+    - name: template config to remote hosts
+      template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf
+  #+end_src

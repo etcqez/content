@@ -1,0 +1,104 @@
+---
+title: "聚合查询和原生数据库操作"
+date: 2023-05-15T15:54:50+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 聚合查询
+** 整表聚合
+*** mysql里的聚合查询
+#+begin_src sql
+MariaDB [mysite1]> select count(*) from book;
++----------+
+| count(*) |
++----------+
+|        2 |
++----------+
+1 row in set (0.002 sec)
+
+
+MariaDB [mysite1]> select count(*) as count from book;
++-------+
+| count |
++-------+
+|     2 |
++-------+
+1 row in set (0.000 sec)
+
+#+end_src
+*** django shell
+#+BEGIN_SRC python :results output
+bookstore.models import Book
+>>> from django.db.models import Count
+>>> Book.objects.aggregate(count=Count('id'))
+{'count': 2}
+
+#+END_SRC
+** 分组聚合
+*** 步骤
+**** 1. Mymodel.objects.values
+***** 返回值: QuerySet
+***** 作用: 查询部分列的数据并返回
+***** 等同于 select 列1,列2 from table
+**** 2. QuerySet对象.annotate(名=聚合函数('列'))
+***** 返回值: QuerySet
+**** 示例
+#+BEGIN_SRC python :results output
+# 根据出版社分组,显示各出版社各有多少本书
+>>> bs = Book.objects.values('pub')
+>>> bs
+<QuerySet [{'pub': '清华大学出版社'}, {'pub': '清华大学出版社'}]>
+>>> bs.annotate(res=Count('id'))
+<QuerySet [{'pub': '清华大学出版社', 'res': 2}]>
+
+#根据聚合字段过滤
+>>> bs.annotate(res=Count('id')).filter(res__gt=1)
+<QuerySet [{'pub': '清华大学出版社', 'res': 2}]>
+>>> bs.annotate(res=Count('id')).filter(res__gt=2)
+<QuerySet []>
+
+#+END_SRC
+* 原生数据库操作
+** 会产生sql注入
+** sql注入防范
+#+BEGIN_SRC python :results output
+Book.objects.raw('select * from bookstore_book where id=%s'%('1 or 1=1'))
+#+END_SRC
+** 示例
+*** 会产生sql注入
+#+BEGIN_SRC python :results output
+>>> from bookstore.models import Book
+>>> s1 = Book.objects.raw('select * from book where id=%s'%('1 or 1=1'))
+>>> s1
+<RawQuerySet: select * from book where id=1 or 1=1>
+>>> for i in s1:
+...     print(i.title)
+...
+Python
+Django
+
+#+END_SRC
+
+*** 正确
+#+BEGIN_SRC python :results output
+>>> from bookstore.models import Book
+>>> s1 = Book.objects.raw('select * from book where id=%s',['1 or 1=1'])
+>>> s1
+<RawQuerySet: select * from book where id=1 or 1=1>
+>>> for i in s1:
+...     print(i.title)
+...
+Python
+
+#+END_SRC
+* 原生数据库操作 - cursor
+1. 导入cursor所在的包
+2. 用创建cursor类的构造函数创建cursor对象
+   #+BEGIN_SRC python :results output
+   from django.db import connection
+   with connection.cursor() as cur:
+       cur.execute('执行SQL语句','拼接参数')
+
+   #+END_SRC

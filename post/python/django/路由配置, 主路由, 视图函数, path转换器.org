@@ -1,0 +1,166 @@
+---
+title: "路由配置, 主路由, 视图函数, path转换器"
+date: 2023-05-09T12:28:19+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 配置新的路由
+** 主路由-urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    # http://127.0.0.1:8000/page/2003/
+    # 引入views文件中的page_2003_view函数,不用加括号
+    path('page/2003', views.page_2003_view),
+]
+
+#+END_SRC
+** 安装成功界面仅出现在urls.py文件路由(path函数)为空时
+** 视图函数
+*** 语法
+#+BEGIN_SRC python :results output
+def xxx_view(request[,其它参数]):
+    return HttpResponse对象
+#+END_SRC
+*** 样例
+**** file: ~/mysite1/mysite1/views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+def page_2003_view(request):
+    html='<h1>这是第1个web页面</h1>'
+    return HttpResponse(html)
+
+#+END_SRC
+* 练习 - 建立一个小网站
+** 要求
+1. 输入网址: http://127.0.0.1:8000,在网页中输出: 这是我的首页
+2. 输入网址: http://127.0.0.1:8000/page/1,在网页中输出: 这是编号为1的网页
+3. 输入网址: http://127.0.0.1:8000/page/2,在网页中输出: 这是编号为2的网页
+** 主路由 - urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    # http://127.0.0.1:8000/
+    path('', views.index_view),
+    # http://127.0.0.1:8000/page/1
+    # 引入views文件中的page1_view
+    path('page/1', views.page1_view),
+    # http://127.0.0.1:8000/page/2
+    # 引入views文件中的page2_view
+    path('page/2', views.page2_view),
+]
+
+#+END_SRC
+** 视图函数 views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+
+def index_view(request):
+    html = '这是我的首页'
+    return HttpResponse(html)
+
+def page1_view(request):
+    html = '这是编号为1的网页'
+    return HttpResponse(html)
+
+def page2_view(request):
+    html = '这是编号为2的网页'
+    return HttpResponse(html)
+
+#+END_SRC
+* 思考
+** 建立如上一百个网页怎么办?
+#+begin_quote
+例如: http//127.0.0.1:8000/page/1
+      http//127.0.0.1:8000/page/2
+            ...
+      http//127.0.0.1:8000/page/100
+#+end_quote
+** path转换器: 按照规则进行匹配
+*** 语法: <转换器类型:自定义名>
+**** 转换器类型
+***** str: 匹配除了'/'之外的非空字符串
+***** int: 匹配0或正整数,返回一个int
+***** slug: 匹配字母,数字,连字符,下划线
+***** path: 匹配非空字段,包括路径分隔符
+*** 作用: 若转换器类型匹配到对应类型的数据,则将数据按照关键字传参方式传递给视图函数
+*** 例子: path('page/<int:page>',views.xxx)
+** 主路由 - mysite1/urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    path('page/<int:pg>',views.pagen_view)
+]
+
+#+END_SRC
+** 视图函数 - mysite1/views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+
+# 参数: pg <int:pg>
+def pagen_view(request, pg):
+    html = '这是编号为%s的网页'%(pg)
+    return HttpResponse(html)
+
+#+END_SRC
+* 练习: 小计算器
+** 要求
+1. 定义一个路由格式为:
+   http://127.0.0.1:8000/整数/操作字符串[add/sub/mul]/整数
+2. 从路由中提取数据,做相应的操作后返回给浏览器
+3. 效果如下:
+   #+begin_quote
+输入: http://127.0.0.1:8000/100/add/200
+页面显示结果: 200
+   #+end_quote
+** 主路由 - urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    path('<int:n>/<str:op>/<int:m>',views.cal_view)
+]
+
+#+END_SRC
+
+
+** 视图函数 - views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+
+def cal_view(request,n,op,m):
+    if op not in ['add', 'sub', 'mul']:
+        return HttpResponse('Your op is wrong')
+
+    result = 0
+    if op == 'add':
+        result = n + m
+    elif op == 'sub':
+        result = n-m
+    elif op == 'mul':
+        result = n*m
+    return HttpResponse('结果为:%s'%(result))
+
+#+END_SRC

@@ -1,0 +1,129 @@
+---
+title: "技巧"
+date: 2023-02-14T19:47:39+08:00
+categories: ["Linux"]
+---
+
+* 技巧
+- 结合多条命令输出
+  #+begin_src shell
+  {uname -r;uname -m}
+  #+end_src
+- CAPS或<>表示变化的数据
+- 查看文件的16进制
+  #+begin_src shell
+  hexdump -C awk.org
+  #+end_src
+- bc十进制转二进制
+  #+begin_src shell
+bc
+obase=2
+4
+  #+end_src
+- 查看所有隐藏文件
+  #+begin_src shell
+  ls -Ad .*
+  #+end_src
+- 查看磁盘开头512个字节
+  #+begin_src shell
+  sudo hexdump -C -n 512 /dev/nvme0n1p1
+  #+end_src
+- uname,who
+  #+begin_src shell
+  #release
+  uname -r
+  #all
+  uname -a
+  #查看登录了几个用户
+  who
+  echo {000..10..2}
+  M-<num> l
+  #+end_src
+- /etc
+  #+begin_src shell
+  #登录成功的欢迎提示
+  /etc/motd
+  #登录前提示
+  /etc/issue
+  #查看当前shell以及可用shell
+  echo $SHELL
+  cat /etc/shells
+  #查看操作系统
+  cat /etc/os-release
+  #+end_src
+- 查看cpu
+  #+begin_src shell
+  lscpu
+  cat /proc/cpuinfo
+  #+end_src
+- 带颜色输出
+  #+begin_src shell
+  #-e 支持\
+  #[31m 红色
+  #[0m 结束
+  echo -e "\e[31mwelcome\e[0m"
+  #+end_src
+- whereis 和 whatis 结合使用查看man目录和命令的关系
+  #+begin_src shell
+  ➜  ~ whatis echo
+  echo (1)             - display a line of text
+  echo (3x)            - curses input options
+  ➜  ~ whereis echo
+  echo: /bin/echo /usr/share/man/man3/echo.3x.bz2 /usr/share/man/man1/echo.1.bz2
+  #+end_src
+- 自动挂载 autofs
+- 去wang的家目录
+  #+begin_src shell
+  cd ~wang
+  #+end_src
+- ~- 前1个工作目录
+  #+begin_src shell
+  cat ~-/awk.org
+  #相当于
+  cat $OLDPWD/awk.org
+  #+end_src
+- 拷贝隐藏,非隐藏到目录
+  #+begin_src shell
+  cp -av . /opt/
+  #+end_src
+- 创建 -f 文件
+  #+begin_src shell
+  touch ./-f
+  rm ./-f
+  #+end_src
+- 查看从1970到今天经过的天数
+  #+begin_src shell
+  echo `date +%s`/86400 |bc
+  date +%F/%T
+  #+end_src
+- 复制file1的acl权限给file2
+  #+begin_src shell
+  getfacl file1 |setfacl --set-file=- file2
+  #+end_src
+- =patch -b= 备份
+- bash语法检查: =bash -n=
+  - 调试: =bash -x=
+- 特殊条件
+  - while : 同 while true
+- 查看网卡驱动文件
+  #+begin_src shell
+➜  ~ ethtool -i eth0
+driver: r8169
+➜  ~ modinfo -n r8169
+/lib/modules/5.15.88-gentoo-dist/kernel/drivers/net/ethernet/realtek/r8169.ko
+  #+end_src
+- rev反转
+  #+begin_src shell
+  #反转
+  echo "FBI Warning" | rev
+  #+end_src
+- 排除空行和#开头的行
+  #+begin_src shell
+  grep -v "^;" /etc/php/cli-php8.1/php.ini |grep -v ^$
+  grep -v "^;\|^$" /etc/php/cli-php8.1/php.ini
+  grep -v "^\(;\|$\)" /etc/php/cli-php8.1/php.ini
+  grep "^[^;]" /etc/php/cli-php8.1/php.ini
+  #+end_src
+- =grep "^\(.*\)\>.*\<\1$" /etc/passwd=
+  - =^\(.*\)>= 匹配1个单词
+  - =\<\1$= 以前1个单词结尾

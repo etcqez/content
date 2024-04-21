@@ -1,0 +1,248 @@
+---
+title: "模板"
+date: 2023-05-12T16:11:46+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* 模板配置
+** 创建模板文件夹
+*** <项目名>/templages
+** 在settings.py配置模板文件夹路径
+#+BEGIN_SRC python :results output
+import os
+        'DIRS': [os.path.join(BASE_DIR,'templates')],
+#+END_SRC
+* 模板的加载方式
+** 方案1 - 通过loader获取模板,通过HttpResponse进行响应
+*** cat templates/test_html.html
+#+begin_src html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <h3>我是模板层的~~~~</h3>
+  </body>
+</html>
+
+#+end_src
+*** cat mysite1/urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    path('test_html', views.test_html)
+]
+
+#+END_SRC
+*** cat mysite1/views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+from django.template import loader
+
+def test_html(request):
+    t = loader.get_template('test_html.html')
+    html =t.render()
+    return HttpResponse(html)
+
+#+END_SRC
+** 方案2 - 使用render()直接加载并响应模板
+*** cat mysite1/views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+from django.shortcuts import render
+
+def test_html(request):
+    return render(request,'test_html.html')
+
+#+END_SRC
+
+* 视图层与模板层之间的交互
+1. 视图函数中可以将 =python变量= 封装到 =字典= 中传递到模板
+2. 模板中,我们可以用 ={{变量名}}= 的语法调用视图传进来的变量
+3. 示例
+   1. cat mysite1/views.py
+      #+BEGIN_SRC python :results output
+from django.http import HttpResponse
+from django.shortcuts import render
+
+def test_html(request):
+    dic = {'username':'guoxiaonao','age':18}
+    return render(request,'test_html.html',dic)
+
+      #+END_SRC
+
+   2. cat templages/test_html.html
+      #+begin_src html
+    <h3>{{username}}是模板层的~~~~</h3>
+
+      #+end_src
+* 模板的变量
+** 模板中变量语法
+- {{变量名}}
+- {{变量名.index}} 数组
+- {{变量名.key}} 字典
+- {{对象.方法}}
+- {{函数名}} 类的实例化对象
+** 示例
+*** views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+from django.shortcuts import render
+
+def test_html(request):
+    dic = {}
+    dic['int'] = 88
+    dic['str'] = 'guoxiaonao'
+    dic['lst'] = ['Tom','Jack','Lily']
+    dic['dict'] = {'a':9, 'b':8}
+    dic['func'] = say_hi
+    dic['class_obj'] = Dog()
+    return render(request,'test_html_param.html',dic)
+
+def say_hi():
+    return 'hahaha'
+
+class Dog:
+    def say(self):
+        return 'wangwang'
+
+#+END_SRC
+*** test_html_param.html
+#+begin_src html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <h3>int 是 {{int}}</h3>
+    <h3>str 是 {{str}}</h3>
+    <h3>lst 是 {{lst}}</h3>
+    <h3>lst 是 {{lst.0}}</h3>
+    <h3>dict 是 {{dict}}</h3>
+    <h3>dict['a'] 是 {{dict.a}}</h3>
+    <h3>function 是 {{func}}</h3>
+    <h3>class_obj 是 {{class_obj.say}}</h3>
+  </body>
+</html>
+
+#+end_src
+
+* 模板的标签
+通过标签控制页面结构,它们定都有结束标签
+** if标签
+*** cat templates/test_if_for.html
+#+begin_src html
+  <body>
+    {% if x > 10 %}
+    今天天气很好
+    {% else %}
+    今天天气非常好
+    {% endif %}
+  </body>
+
+#+end_src
+*** cat mysite1/urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    path('test_if_for', views.test_if_for)
+]
+
+#+END_SRC
+*** cat mysite1/views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+from django.shortcuts import render
+
+def test_if_for(request):
+    dic = {}
+    dic['x'] = 10
+    return render(request,'test_if_for.html',dic)
+
+#+END_SRC
+** for标签
+*** 语法
+#+begin_src html
+{% for 变量 in 可迭代对象 %}
+    ... 循环语句
+{% empty %}
+    ... 可迭代对象无数据时填充的语句
+{% endfor %}
+#+end_src
+*** 内置变量 - forloop
+| 变量                 | 描述                          |
+| forloop.counter     | 循环的当前迭代(从1开始索引)       |
+| forloop.counter     | 循环的当前迭代(从0开始索引)       |
+| forloop.revcounter  | counter值的倒序                |
+| forloop.revcounter0 | counter0值的倒序               |
+| forloop.first       | 如果这是第一次循环,则为真         |
+| forloop.last        | 如果这是最后一次循环,则为真       |
+| forloop.parentloop  | 当嵌套循环,parentloop表示外层循环 |
+*** 示例
+**** test_if_for.html
+#+begin_src html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/style.css" rel="stylesheet">
+  </head>
+  <body>
+    {% for name in lst %}
+    {% if forloop.first %} &&&&& {% endif %}
+    <p>{{ forloop.counter }} {{ name }}</p>
+    {% if forloop.last %} ===== {% endif %}
+    {% empty %}
+    当前没数据
+    {% endfor %}
+  </body>
+</html>
+
+#+end_src
+**** views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+from django.shortcuts import render
+
+def test_if_for(request):
+    dic = {}
+    dic['x'] = 10
+    dic['lst'] = ['Tom', 'Jack', 'Lily']
+    return render(request,'test_if_for.html',dic)
+
+#+END_SRC
+**** cat mysite1/urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import path
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    path('test_if_for', views.test_if_for)
+]
+
+#+END_SRC

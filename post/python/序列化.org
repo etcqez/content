@@ -1,0 +1,47 @@
+---
+title: "序列化"
+date: 2023-02-27T15:05:28+08:00
+summary: "pickle, json"
+categories: ["Python"]
+tags: [""]
+---
+
+- pickle
+  #+begin_src python :results output
+import pickle
+
+filename='./ser.bin'
+a=99
+
+with open(filename,'wb') as f:
+    pickle.dump(a,f)
+
+with open(filename,'rb') as f:
+    x=pickle.load(f)
+    print(type(x),x)
+  #+end_src
+
+#+RESULTS:
+: <class 'int'> 99
+
+
+- json
+  #+begin_src python :results output
+import json
+
+d={'name':'tom','age':20,'interest':['movie','nusic']}
+
+x=json.dumps(d)
+print(type(x),x)
+
+d1=json.loads(x)
+print(type(d1),d1)
+print(d==d1) # ==比较内容
+print(d is d1)
+  #+end_src
+
+  #+RESULTS:
+  : <class 'str'> {"name": "tom", "age": 20, "interest": ["movie", "nusic"]}
+  : <class 'dict'> {'name': 'tom', 'age': 20, 'interest': ['movie', 'nusic']}
+  : True
+  : False

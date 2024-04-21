@@ -1,0 +1,24 @@
+---
+title: "Mysql常用选项"
+date: 2023-05-22T14:16:33+08:00
+summary: " "
+categories: ["Mysql"]
+tags: [""]
+---
+
+1. =-A= 禁止补全
+2. =-P= port
+3. =-S= socket
+4. =-D= 指定默认数据库
+   - 默认不写也是
+     - =mysql -uroot -pf mysql=
+5. =-C= 启用压缩
+6. =-e= 执行sql命令
+   - =mysql -uroot -pf -e "show databases;status;"=
+7. =-V= 查看版本
+8. =-v= verbose
+9. =--print-defaults=
+   #+begin_src shell
+mysql --print-defaults
+mysqld --print-defaults
+   #+end_src

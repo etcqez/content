@@ -1,0 +1,49 @@
+---
+title: "Cookies和session"
+date: 2023-05-16T21:00:40+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* cookies
+** 添加cookie
+*** mysite1/views.py
+#+BEGIN_SRC python :results output
+def set_cookies(request):
+    resp = HttpResponse('set cookes is ok')
+    resp.set_cookie('uuname', 'gxn',500)
+    return resp
+
+#+END_SRC
+*** mysite1/usrl.py
+#+BEGIN_SRC python :results output
+    path('set_cookies', views.set_cookies)),
+
+#+END_SRC
+** 修改同添加
+** 获取cookies
+#+BEGIN_SRC python :results output
+def get_cookies(request):
+
+    value = request.COOKIES.get('uuname')
+    return HttpResponse('value is %s'%(value))
+    resp.set_cookie('uuname', 'gxn',500)
+    return resp
+
+#+END_SRC
+** 删除cookies
+=HttpResponse.delete_cookie(key)=, 如果key不存在则什么也不发生
+* session
+session保存在服务器上,客户端通过sessionid找到保存的session,sessionid以cookie方式存储,所以也会过期,默认14天
+** 使用
+session对象是一个类似字典的SessionStore类型的对象,可以用类似于字典的方式进行操作
+** 配置: settings.py
+1. SESSION_COOKIE_AGE
+   - 指定sessionid在cookies中的保存时长(默认是2周)
+   - 例如: SESSION_COOKIE_AGE = 60 * 60 * 24 * 7 * 2
+2. SESSION_EXPIRE_AT_BROWSER_CLOSE = Trun
+   - 设置只要浏览器关闭时,session就失效(默认为False)
+** django_session表
+*** 此表过期不会自动删除
+**** 执行 =python manager.py clearsessions= 该命令可删除已过期的session数据

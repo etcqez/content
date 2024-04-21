@@ -1,0 +1,80 @@
+---
+title: "路由配置 正则"
+date: 2023-05-09T14:43:05+08:00
+summary: " "
+categories: ["Django"]
+tags: [""]
+---
+
+* re_path()函数
+** 语法
+- re_path(reg,view,name=xxx)
+- 正则表达式为命名分组模式(?P<name>pattern);匹配提取参数后用关键字传参方式传递给 视图函数
+* 练习 - 一,两位数的小计算
+** 要求
+- 可匹配 http:/127.0.0.1:8000/20/mul/40
+- 不可匹配 http:/127.0.0.1:8000/200/mul/400
+** urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import re_path
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    re_path(r'^(?P<x>\d{1,2})/(?P<op>\w+)/(?P<y>\d{1,2})$', views.cal2_view),
+]
+
+#+END_SRC
+** views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+
+def cal2_view(request,x,op,y):
+    if op not in ['add', 'sub', 'mul']:
+        return HttpResponse('Your op is wrong')
+
+    result = 0
+    if op == 'add':
+        result = x + y
+    elif op == 'sub':
+        result = x-y
+    elif op == 'mul':
+        result = x*y
+    return HttpResponse('结果为:%s'%(result))
+
+#+END_SRC
+* 练习 - 打印生日
+** 要求
+- 效果如下
+  #+begin_quote
+访问地址: http://127.0.0.1:8000/birthday/四位数字/一到两位数字/一到两位数字
+访问地址: http://127.0.0.1:8000/birthday/一到两位数字/一到两位数字/四位数字
+最终输出: 生日为: xxxx年xx月xx日
+  #+end_quote
+
+** urls.py
+#+BEGIN_SRC python :results output
+from django.contrib import admin
+from django.urls import re_path
+
+# 导入views文件
+from . import views
+
+urlpatterns = [
+    re_path(r'^birthday/(?P<y>\d{4})/(?P<m>\d{1,2})/(?P<d>\d{1,2})$', views.birthday_view),
+    re_path(r'^birthday/(?P<m>\d{1,2})/(?P<d>\d{1,2})/(?P<y>\d{4})$', views.birthday_view),
+]
+
+#+END_SRC
+
+** views.py
+#+BEGIN_SRC python :results output
+from django.http import HttpResponse
+
+def birthday_view(request,y,m,d):
+    html = '生日为%s年%s月%s日'%(y,m,d)
+    return HttpResponse(html)
+
+#+END_SRC

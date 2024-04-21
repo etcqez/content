@@ -1,0 +1,21 @@
+---
+title: "命令的帮助用法"
+date: 2023-02-14T19:24:39+08:00
+categories: ["Linux"]
+---
+
+* 命令的帮助用法
+#+begin_quote
+➜  ~ whatis cal
+ls: nothing appropriate.
+#+end_quote
+
+#+begin_src shell
+sudo mandb
+#查看描述
+whatis cal
+#等价于
+man -f cal
+#内部命令
+help history
+#+end_src

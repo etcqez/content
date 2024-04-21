@@ -1,0 +1,62 @@
+---
+title: "Xargs"
+date: 2023-02-18T17:11:22+08:00
+categories: ["Linux"]
+---
+
+* xargs 将输入传给下一个命令,作为其的参数
+1. =seq 10 |xargs= 多行变1行, =echo {1..10} |xargs -n1= 1行变多g行
+   #+begin_src shell
+   ➜  ~ seq 10
+   1
+   2
+   3
+   4
+   5
+   6
+   7
+   8
+   9
+   10
+   ➜  ~ seq 10 |xargs
+   1 2 3 4 5 6 7 8 9 10
+   ➜  ~ echo {1..10}
+   1 2 3 4 5 6 7 8 9 10
+   ➜  ~ echo {1..10} |xargs -n1
+   1
+   2
+   3
+   4
+   5
+   6
+   7
+   8
+   9
+   10
+   #+end_src
+2. 批量创建用户
+   #+begin_src shell
+   echo user{1..10} |xargs -n1 useradd
+   echo user{1..10} |xargs -n1 userdel -r
+   getent passwd
+   #+end_src
+** 结合ls
+#+begin_src shell
+find -maxdepth 1 -type f |xargs ls -Slh
+#不是那么好用
+find -maxdepth 1 -type f -exec ls -Slh {} \;
+#+end_src
+1. 当文件存有空格
+   #+begin_src shell
+   ➜  ~ touch "a b"
+   ➜  ~ find -maxdepth 1 -type f |xargs ls -Slh
+   ls: cannot access './a': No such file or directory
+   ls: cannot access 'b': No such file or directory
+   #+end_src
+   - 因为xargs默认以空格作为分隔符
+   - 解决方法: 以空(nul)作为分隔符
+     #+begin_src shell
+     ➜  ~ find -maxdepth 1 -type f -print0 | xargs -0 ls -Slh
+     -rw-r--r-- 1 f    f       0 Jan 10 15:37 './a b'
+     #+end_src
+     - -0 代表空

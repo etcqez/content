@@ -1,0 +1,28 @@
+---
+title: "软件包"
+date: 2023-02-18T22:17:53+08:00
+categories: ["Linux"]
+---
+
+*** 实现私用yum仓库
+**** 光盘
+#+begin_src shell
+yum -y install httpd
+mkdir /var/www/html/centos/8 -pv
+mount /dev/sr0 /mnt/
+cp -a /mnt/* /var/www/html/centos/8
+systemctl enable --now httpd
+#+end_src
+**** 网络
+***** 下载阿里云的extras源,制作私有yum源
+#+begin_src shell
+dnf reposync --repoid=extras --download-metadate -p /var/www/html/centos/extras/
+#+end_src
+*** dpkg包管理器
+- 列出已安装的包: =dpkg -l= 同 =rpm -qa=
+- 显示该包的描述: =dpkg -l 同 package=
+- 详细信息: =dpkg -s package= 同 =rpm -qi=
+- 包含文件: =dpkg -L package= 同 =rpm -ql=
+- 某个文件来自哪个包: =dpkg -S /~= 同 =rpm -qf=
+- 预览deb包的内容: =dpkg -c package.deb= 同 =rpm -qpl=
+- 解包: =dpkg --unpack package.deb=
