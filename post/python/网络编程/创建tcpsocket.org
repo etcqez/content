@@ -1,0 +1,54 @@
+---
+title: "创建tcpsocket"
+date: 2023-03-18T04:27:21+08:00
+summary: ""
+categories: ["Python"]
+tags: ["tcp"]
+---
+
+* 服务端
+#+BEGIN_SRC python :results output
+  import socket
+
+  # 创建tcp套接字
+  sockfd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+  sockfd.bind(('127.0.0.1',8888))
+  sockfd.listen(5)
+
+  print('Waiting for connect...')
+  connfd,addr=sockfd.accept()
+  print('Connect from',addr)
+
+  data=connfd.recv(1024)
+  print('收到:',data.decode())
+  n=connfd.send(b'Thanks')
+  print('发送%d字节'%n)
+
+  connfd.close()
+  sockfd.close()
+
+#+END_SRC
+
+#+RESULTS:
+: Waiting for connect...
+: Connect from ('127.0.0.1', 46494)
+: 收到: b'GET / HTTP/1.1\r\nHost: 127.0.0.1:8888\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/110.0\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\nAccept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2\r\nAccept-Encoding: gzip, deflate, br\r\nDNT: 1\r\nConnection: keep-alive\r\nCookie: firstVisit=1679071634582; CSRF-Token-UOF62=pWoikrkTwMdgf3qTzfEJZky6zZjAdvh7\r\nUpgrade-Insecure-Requests: 1\r\nSec-Fetch-Dest: document\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-Site: none\r\nSec-Fetch-User: ?1\r\n\r\n'
+: 发送6字节
+* 客户端
+#+BEGIN_SRC python :results output
+  import socket
+
+  sockfd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+  sockfd.connect(('127.0.0.1',8888))
+
+  # 发送
+  data=input('Msg>>')
+  sockfd.send(data.encode())
+  data=sockfd.recv(1024)
+  print("Server:",data.decode())
+
+  sockfd.close()
+
+#+END_SRC

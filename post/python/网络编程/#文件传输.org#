@@ -1,0 +1,53 @@
+---
+title: "文件传输"
+date: 2023-03-18T11:13:36+08:00
+summary: ""
+categories: ["Python"]
+tags: ["tcp"]
+---
+
+* 客户端
+#+BEGIN_SRC python :results output
+ from socket import *
+
+  ADDR=('127.0.0.1',8888)
+
+  s=socket()
+  s.connect(ADDR)
+
+  f=open('test','rb')
+  while True:
+      data=f.read()
+      if not data:
+	  break
+      s.send(data)
+
+  f.close()
+  s.close()
+
+#+END_SRC
+* 服务端
+#+BEGIN_SRC python :results output
+  from socket import *
+
+  ADDR=('127.0.0.1',8888)
+
+  s = socket()
+  s.bind(ADDR)
+  s.listen(3)
+
+  c,addr=s.accept()
+  print('Connect from',addr)
+
+  f=open('./test.bak','wb')
+  while True:
+      data=c.recv(1024)
+      if not data:
+	  break
+      f.write(data)
+
+  f.close()
+  c.close()
+  s.close()
+
+#+END_SRC

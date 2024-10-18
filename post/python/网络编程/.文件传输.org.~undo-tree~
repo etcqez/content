@@ -1,0 +1,6 @@
+(undo-tree-save-format-version . 1)
+"78707148358b4e535976f1b3cdb7d3854c7fa3df"
+[nil nil nil nil (26361 19743 268725 681000) 0 nil]
+([nil nil ((146 . 148) (168 . 170) (193 . 195) (204 . 206) (221 . 223) (241 . 243) (257 . 259) (271 . 272) (275 . 276) (288 . 289) (#("      " 0 6 (src-block t face (org-block) font-lock-multiline t font-lock-fontified t fontified t)) . 288) (302 . 303) (306 . 307) (320 . 322) (330 . 332) 146 (t 26361 9469 584591 798000)) nil (26361 19743 268723 617000) 0 nil])
+([nil current ((409 . 411) (431 . 433) (456 . 458) (469 . 471) (482 . 484) (495 . 497) (513 . 515) (541 . 543) (567 . 569) (579 . 580) (583 . 584) (601 . 603) (618 . 619) (#("      " 0 6 (src-block t face (org-block) font-lock-multiline t font-lock-fontified t fontified t)) . 618) (632 . 634) (651 . 653) (661 . 663) (671 . 673) 409) nil (26361 19743 268715 441000) 0 nil])
+nil
